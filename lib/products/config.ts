@@ -11,7 +11,7 @@ export const products = {
   },
   'atticus': {
     id: 'atticus',
-    name: 'Atticus',
+    name: 'Atticus: Social Media',
     slug: 'atticus-social-media',
     tagline: 'Social media, simplified.',
     colors: {
@@ -21,7 +21,7 @@ export const products = {
   },
   'nicole': {
     id: 'nicole',
-    name: 'Nicole',
+    name: 'Nicole: Website Builder',
     slug: 'nicole-websites',
     tagline: 'Beautiful websites for real estate agents',
     colors: {
