@@ -2,6 +2,15 @@ import Link from 'next/link'
 import { Plus, BookOpen, Pencil, Eye, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminProduct } from '@/lib/products/server'
+import { products, type ProductId } from '@/lib/products/config'
+
+function getProductBlogUrl(productId: string | null, postSlug: string): string {
+  if (!productId || !(productId in products)) {
+    return `/client-keeper-crm/blog/${postSlug}`
+  }
+  const product = products[productId as ProductId]
+  return `/${product.slug}/blog/${postSlug}`
+}
 
 export default async function AdminBlogPage() {
   const supabase = await createClient()
@@ -143,7 +152,7 @@ export default async function AdminBlogPage() {
                     </p>
                     <div className="flex items-center gap-4 mt-1">
                       <p className="text-xs text-gray-400">
-                        /blog/{post.slug}
+                        {getProductBlogUrl(post.product_id, post.slug)}
                       </p>
                       {post.published_at && (
                         <p className="text-xs text-gray-400 flex items-center gap-1">
@@ -168,7 +177,7 @@ export default async function AdminBlogPage() {
                   <div className="flex items-center gap-2 ml-4">
                     {post.status === 'published' && (
                       <Link
-                        href={`/blog/${post.slug}`}
+                        href={getProductBlogUrl(post.product_id, post.slug)}
                         target="_blank"
                         className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                         title="View"

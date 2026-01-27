@@ -2,6 +2,16 @@ import Link from 'next/link'
 import { Plus, FileText, Pencil, Eye, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminProduct } from '@/lib/products/server'
+import { products, type ProductId } from '@/lib/products/config'
+
+function getProductSupportUrl(productId: string | null, docSlug: string): string {
+  if (!productId || !(productId in products)) {
+    // Default to client-keeper if no product
+    return `/client-keeper-crm/support/${docSlug}`
+  }
+  const product = products[productId as ProductId]
+  return `/${product.slug}/support/${docSlug}`
+}
 
 export default async function AdminDocsPage() {
   const supabase = await createClient()
@@ -130,12 +140,12 @@ export default async function AdminDocsPage() {
                           {doc.description || 'No description'}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          /support/{doc.slug}
+                          {getProductSupportUrl(doc.product_id, doc.slug)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         <Link
-                          href={`/support/${doc.slug}`}
+                          href={getProductSupportUrl(doc.product_id, doc.slug)}
                           target="_blank"
                           className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                           title="View"
