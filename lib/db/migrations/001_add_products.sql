@@ -33,11 +33,11 @@ BEGIN
   END IF;
 END $$;
 
--- Add product_id to support_categories if table exists
+-- Add product_id to doc_categories if table exists
 DO $$
 BEGIN
-  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'support_categories') THEN
-    ALTER TABLE support_categories ADD COLUMN IF NOT EXISTS product_id TEXT REFERENCES products(id) DEFAULT 'client-keeper';
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'doc_categories') THEN
+    ALTER TABLE doc_categories ADD COLUMN IF NOT EXISTS product_id TEXT REFERENCES products(id) DEFAULT 'client-keeper';
   END IF;
 END $$;
 
@@ -52,5 +52,5 @@ END $$;
 -- Create indexes for product_id columns
 CREATE INDEX IF NOT EXISTS idx_blog_posts_product_id ON blog_posts(product_id);
 CREATE INDEX IF NOT EXISTS idx_support_docs_product_id ON support_docs(product_id);
-CREATE INDEX IF NOT EXISTS idx_support_categories_product_id ON support_categories(product_id);
+CREATE INDEX IF NOT EXISTS idx_doc_categories_product_id ON doc_categories(product_id);
 CREATE INDEX IF NOT EXISTS idx_blog_categories_product_id ON blog_categories(product_id);

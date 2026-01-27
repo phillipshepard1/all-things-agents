@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Plus, Edit2, Trash2, GripVertical, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
   id: string
@@ -17,6 +18,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const { selectedProduct } = useAdminProduct()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -24,11 +26,17 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     const supabase = createClient()
 
-    // Fetch categories
-    const { data: cats, error: catError } = await supabase
+    // Fetch categories filtered by product
+    let catQuery = supabase
       .from('doc_categories')
       .select('*')
       .order('sort_order')
+
+    if (selectedProduct && selectedProduct !== 'hub') {
+      catQuery = catQuery.eq('product_id', selectedProduct)
+    }
+
+    const { data: cats, error: catError } = await catQuery
 
     if (catError) {
       console.error('Error fetching categories:', catError)
@@ -36,10 +44,16 @@ export default function CategoriesPage() {
       return
     }
 
-    // Get doc counts
-    const { data: docs } = await supabase
+    // Get doc counts filtered by product
+    let docQuery = supabase
       .from('support_docs')
       .select('category_id')
+
+    if (selectedProduct && selectedProduct !== 'hub') {
+      docQuery = docQuery.eq('product_id', selectedProduct)
+    }
+
+    const { data: docs } = await docQuery
 
     const docCounts = (docs || []).reduce((acc, doc) => {
       if (doc.category_id) {
@@ -49,7 +63,7 @@ export default function CategoriesPage() {
     }, {} as Record<string, number>)
 
     setCategories(
-      cats.map((cat) => ({
+      (cats || []).map((cat) => ({
         ...cat,
         doc_count: docCounts[cat.id] || 0,
       }))
@@ -58,9 +72,10 @@ export default function CategoriesPage() {
   }
 
   useEffect(() => {
+    setLoading(true)
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial data fetch on mount
     void fetchCategories()
-  }, [])
+  }, [selectedProduct])
 
   async function handleDelete(id: string, docCount: number) {
     if (docCount > 0) {

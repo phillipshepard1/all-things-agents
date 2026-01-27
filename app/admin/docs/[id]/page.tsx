@@ -10,6 +10,7 @@ import type { GuideImportResult } from '@/lib/editor/guide-markdown-parser'
 import { VideoUpload } from '@/components/admin/editor/video-upload'
 import { TiptapContent } from '@/components/support/tiptap-content'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
   id: string
@@ -21,6 +22,7 @@ export default function EditDocPage() {
   const router = useRouter()
   const params = useParams()
   const docId = params.id as string
+  const { selectedProduct } = useAdminProduct()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -28,6 +30,7 @@ export default function EditDocPage() {
   const [error, setError] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [previewMode, setPreviewMode] = useState(false)
+  const [docProductId, setDocProductId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -49,16 +52,7 @@ export default function EditDocPage() {
       try {
         const supabase = createClient()
 
-        // Fetch categories
-        const { data: cats } = await supabase
-          .from('doc_categories')
-          .select('id, slug, title')
-          .eq('is_active', true)
-          .order('sort_order')
-
-        if (cats) setCategories(cats)
-
-        // Fetch doc
+        // Fetch doc first to get its product_id
         const { data, error: fetchError } = await supabase
           .from('support_docs')
           .select('*')
@@ -66,6 +60,23 @@ export default function EditDocPage() {
           .single()
 
         if (fetchError) throw fetchError
+
+        // Store the doc's product_id
+        setDocProductId(data.product_id || null)
+
+        // Fetch categories filtered by the doc's product_id
+        let catQuery = supabase
+          .from('doc_categories')
+          .select('id, slug, title')
+          .eq('is_active', true)
+          .order('sort_order')
+
+        if (data.product_id) {
+          catQuery = catQuery.eq('product_id', data.product_id)
+        }
+
+        const { data: cats } = await catQuery
+        if (cats) setCategories(cats)
 
         setFormData({
           title: data.title || '',

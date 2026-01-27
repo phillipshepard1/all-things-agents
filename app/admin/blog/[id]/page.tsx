@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { NovelEditor } from '@/components/admin/editor/novel-editor'
 import { TiptapContent } from '@/components/support/tiptap-content'
 import { ImageUpload } from '@/components/admin/editor/image-upload'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
   id: string
@@ -19,6 +20,7 @@ export default function EditBlogPostPage() {
   const router = useRouter()
   const params = useParams()
   const postId = params.id as string
+  const { selectedProduct } = useAdminProduct()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -27,6 +29,7 @@ export default function EditBlogPostPage() {
   const [previewMode, setPreviewMode] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
+  const [postProductId, setPostProductId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -44,22 +47,30 @@ export default function EditBlogPostPage() {
 
   const [content, setContent] = useState<any>(null)
 
-  // Fetch categories
+  // Fetch categories filtered by post's product
   useEffect(() => {
     const fetchCategories = async () => {
+      if (!postProductId) return
+
       const supabase = createClient()
-      const { data } = await supabase
+      let query = supabase
         .from('blog_categories')
         .select('id, slug, title')
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
 
+      // Filter categories by the post's product_id
+      if (postProductId) {
+        query = query.eq('product_id', postProductId)
+      }
+
+      const { data } = await query
       if (data) {
         setCategories(data)
       }
     }
     fetchCategories()
-  }, [])
+  }, [postProductId])
 
   // Fetch existing post
   useEffect(() => {
@@ -74,6 +85,9 @@ export default function EditBlogPostPage() {
           .single()
 
         if (fetchError) throw fetchError
+
+        // Store the post's product_id for category filtering
+        setPostProductId(data.product_id || null)
 
         // Parse content if it's stored as JSON string
         let parsedContent = null

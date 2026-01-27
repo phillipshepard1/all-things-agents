@@ -1,20 +1,29 @@
 import Link from 'next/link'
 import { Plus, FileText, Pencil, Eye, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminProduct } from '@/lib/products/server'
 
 export default async function AdminDocsPage() {
   const supabase = await createClient()
+  const productId = await getAdminProduct()
 
-  // Fetch all docs
+  // Fetch docs filtered by product
   let docs: any[] = []
   let error: string | null = null
 
   try {
-    const { data, error: fetchError } = await supabase
+    let query = supabase
       .from('support_docs')
       .select('*')
       .order('category')
       .order('sort_order')
+
+    // Filter by product unless viewing hub (all products)
+    if (productId && productId !== 'hub') {
+      query = query.eq('product_id', productId)
+    }
+
+    const { data, error: fetchError } = await query
 
     if (fetchError) throw fetchError
     docs = data || []

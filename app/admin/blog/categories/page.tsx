@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit2, Trash2, GripVertical, FolderOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
   id: string
@@ -17,6 +18,7 @@ interface Category {
 }
 
 export default function BlogCategoriesPage() {
+  const { selectedProduct } = useAdminProduct()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -24,11 +26,17 @@ export default function BlogCategoriesPage() {
   const fetchCategories = async () => {
     const supabase = createClient()
 
-    // Fetch categories
-    const { data: cats, error: catError } = await supabase
+    // Fetch categories filtered by product
+    let catQuery = supabase
       .from('blog_categories')
       .select('*')
       .order('sort_order')
+
+    if (selectedProduct && selectedProduct !== 'hub') {
+      catQuery = catQuery.eq('product_id', selectedProduct)
+    }
+
+    const { data: cats, error: catError } = await catQuery
 
     if (catError) {
       console.error('Error fetching categories:', catError)
@@ -36,10 +44,16 @@ export default function BlogCategoriesPage() {
       return
     }
 
-    // Get post counts
-    const { data: posts } = await supabase
+    // Get post counts filtered by product
+    let postQuery = supabase
       .from('blog_posts')
       .select('category_id')
+
+    if (selectedProduct && selectedProduct !== 'hub') {
+      postQuery = postQuery.eq('product_id', selectedProduct)
+    }
+
+    const { data: posts } = await postQuery
 
     const postCounts = (posts || []).reduce((acc, post) => {
       if (post.category_id) {
@@ -58,9 +72,10 @@ export default function BlogCategoriesPage() {
   }
 
   useEffect(() => {
+    setLoading(true)
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial data fetch on mount
     void fetchCategories()
-  }, [])
+  }, [selectedProduct])
 
   async function handleDelete(id: string, postCount: number) {
     if (postCount > 0) {

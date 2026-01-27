@@ -1,19 +1,28 @@
 import Link from 'next/link'
 import { Plus, BookOpen, Pencil, Eye, Calendar } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminProduct } from '@/lib/products/server'
 
 export default async function AdminBlogPage() {
   const supabase = await createClient()
+  const productId = await getAdminProduct()
 
-  // Fetch all blog posts
+  // Fetch blog posts filtered by product
   let posts: any[] = []
   let error: string | null = null
 
   try {
-    const { data, error: fetchError } = await supabase
+    let query = supabase
       .from('blog_posts')
       .select('*')
       .order('created_at', { ascending: false })
+
+    // Filter by product unless viewing hub (all products)
+    if (productId && productId !== 'hub') {
+      query = query.eq('product_id', productId)
+    }
+
+    const { data, error: fetchError } = await query
 
     if (fetchError) throw fetchError
     posts = data || []

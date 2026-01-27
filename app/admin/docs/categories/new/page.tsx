@@ -6,9 +6,11 @@ import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 export default function NewCategoryPage() {
   const router = useRouter()
+  const { selectedProduct } = useAdminProduct()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,18 +38,31 @@ export default function NewCategoryPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Require a product selection
+    if (!selectedProduct || selectedProduct === 'hub') {
+      setError('Please select a product before creating a category')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
     try {
       const supabase = createClient()
 
-      // Get max sort_order
-      const { data: existing } = await supabase
+      // Get max sort_order for this product
+      let orderQuery = supabase
         .from('doc_categories')
         .select('sort_order')
         .order('sort_order', { ascending: false })
         .limit(1)
+
+      if (selectedProduct) {
+        orderQuery = orderQuery.eq('product_id', selectedProduct)
+      }
+
+      const { data: existing } = await orderQuery
 
       const nextOrder = (existing?.[0]?.sort_order || 0) + 1
 
@@ -56,6 +71,7 @@ export default function NewCategoryPage() {
         .insert({
           ...formData,
           sort_order: nextOrder,
+          product_id: selectedProduct,
         })
 
       if (insertError) throw insertError

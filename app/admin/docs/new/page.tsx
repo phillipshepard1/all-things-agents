@@ -10,6 +10,7 @@ import type { GuideImportResult } from '@/lib/editor/guide-markdown-parser'
 import { VideoUpload } from '@/components/admin/editor/video-upload'
 import { TiptapContent } from '@/components/support/tiptap-content'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
   id: string
@@ -19,6 +20,7 @@ interface Category {
 
 export default function NewDocPage() {
   const router = useRouter()
+  const { selectedProduct } = useAdminProduct()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -38,20 +40,26 @@ export default function NewDocPage() {
   const [content, setContent] = useState<any>(null)
   const [editorKey, setEditorKey] = useState(0) // Key to force editor remount
 
-  // Fetch categories
+  // Fetch categories filtered by product
   useEffect(() => {
     async function fetchCategories() {
       const supabase = createClient()
-      const { data } = await supabase
+      let query = supabase
         .from('doc_categories')
         .select('id, slug, title')
         .eq('is_active', true)
         .order('sort_order')
 
+      // Filter categories by product
+      if (selectedProduct && selectedProduct !== 'hub') {
+        query = query.eq('product_id', selectedProduct)
+      }
+
+      const { data } = await query
       if (data) setCategories(data)
     }
     fetchCategories()
-  }, [])
+  }, [selectedProduct])
 
   // Auto-generate slug from title
   const handleTitleChange = (title: string) => {
@@ -87,6 +95,13 @@ export default function NewDocPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Require a product selection
+    if (!selectedProduct || selectedProduct === 'hub') {
+      setError('Please select a product before creating a document')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
@@ -112,6 +127,7 @@ export default function NewDocPage() {
           content,
           published_at: formData.status === 'scheduled' ? formData.published_at : null,
           author_id: user?.id,
+          product_id: selectedProduct,
         })
 
       if (insertError) throw insertError

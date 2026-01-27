@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { NovelEditor } from '@/components/admin/editor/novel-editor'
 import { TiptapContent } from '@/components/support/tiptap-content'
 import { ImageUpload } from '@/components/admin/editor/image-upload'
+import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
   id: string
@@ -17,6 +18,7 @@ interface Category {
 
 export default function NewBlogPostPage() {
   const router = useRouter()
+  const { selectedProduct } = useAdminProduct()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState(false)
@@ -41,18 +43,24 @@ export default function NewBlogPostPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       const supabase = createClient()
-      const { data } = await supabase
+      let query = supabase
         .from('blog_categories')
         .select('id, slug, title')
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
 
+      // Filter categories by product
+      if (selectedProduct && selectedProduct !== 'hub') {
+        query = query.eq('product_id', selectedProduct)
+      }
+
+      const { data } = await query
       if (data) {
         setCategories(data)
       }
     }
     fetchCategories()
-  }, [])
+  }, [selectedProduct])
 
   const generateSlug = (title: string) => {
     return title
@@ -89,6 +97,13 @@ export default function NewBlogPostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Require a product selection
+    if (!selectedProduct || selectedProduct === 'hub') {
+      setError('Please select a product before creating a blog post')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
@@ -125,6 +140,7 @@ export default function NewBlogPostPage() {
           category_id: formData.category_id || null,
           meta_description: formData.meta_description || null,
           og_image: formData.og_image || null,
+          product_id: selectedProduct,
         })
 
       if (insertError) throw insertError
