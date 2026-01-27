@@ -4,14 +4,15 @@ import { motion } from 'motion/react';
 import { useInView } from 'motion/react';
 import { useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { products } from '@/lib/products/config';
 import { MagicCard } from '@/components/ui/magic-card';
-import { Users, Share2, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
-const productIcons: Record<string, React.ReactNode> = {
-  'client-keeper': <Users className="h-8 w-8" />,
-  'atticus': <Share2 className="h-8 w-8" />,
-  'nicole': <Globe className="h-8 w-8" />,
+const productLogos: Record<string, string | null> = {
+  'client-keeper': '/images/logos/client-keeper-logo.png',
+  'atticus': '/images/logos/atticus-logo.png',
+  'nicole': null, // Uses Globe icon fallback
 };
 
 const productDescriptions: Record<string, string> = {
@@ -61,39 +62,53 @@ export function ProductShowcase() {
                   gradientColor={product.colors.accent + '20'}
                 >
                   <div className="flex flex-col h-full">
-                    {/* Icon with brand color */}
+                    {/* Logo container - consistent height */}
                     <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center mb-6"
-                      style={{ backgroundColor: product.colors.accent + '15', color: product.colors.accent }}
+                      className="w-16 h-16 rounded-xl flex items-center justify-center mb-6 overflow-hidden"
+                      style={{
+                        backgroundColor: productLogos[product.id] ? 'transparent' : product.colors.accent + '15'
+                      }}
                     >
-                      {productIcons[product.id]}
-                    </div>
-
-                    {/* Name & Status */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="font-display text-2xl font-bold text-hub-foreground">
-                        {product.name}
-                      </h3>
-                      {productStatus[product.id] === 'coming-soon' && (
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-hub-muted text-hub-muted-foreground">
-                          Coming Soon
-                        </span>
+                      {productLogos[product.id] ? (
+                        <Image
+                          src={productLogos[product.id]!}
+                          alt={`${product.name} logo`}
+                          width={64}
+                          height={64}
+                          className="object-contain"
+                        />
+                      ) : (
+                        <Globe className="h-8 w-8" style={{ color: product.colors.accent }} />
                       )}
                     </div>
 
+                    {/* Product name */}
+                    <h3 className="font-display text-2xl font-bold text-hub-foreground mb-2">
+                      {product.name}
+                    </h3>
+
+                    {/* Coming Soon badge - own row, left-aligned */}
+                    {productStatus[product.id] === 'coming-soon' && (
+                      <div className="mb-3 flex justify-start">
+                        <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-hub-muted text-hub-muted-foreground">
+                          Coming Soon
+                        </span>
+                      </div>
+                    )}
+
                     {/* Tagline */}
-                    <p className="text-lg text-hub-muted-foreground mb-4" style={{ color: product.colors.accent }}>
+                    <p className="text-lg mb-4" style={{ color: product.colors.accent }}>
                       {product.tagline}
                     </p>
 
-                    {/* Description */}
+                    {/* Description - grows to fill space */}
                     <p className="text-hub-muted-foreground flex-grow">
                       {productDescriptions[product.id]}
                     </p>
 
-                    {/* Link indicator */}
-                    <div className="mt-6 pt-4 border-t border-hub-border">
-                      <span className="text-sm font-medium text-hub-foreground group-hover:underline">
+                    {/* Link indicator - pushed to bottom with mt-auto */}
+                    <div className="mt-auto pt-6 border-t border-hub-border">
+                      <span className="text-sm font-medium text-hub-foreground">
                         {productStatus[product.id] === 'live' ? 'Learn more →' : 'View preview →'}
                       </span>
                     </div>
