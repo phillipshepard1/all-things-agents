@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { products } from '@/lib/products/config';
 import { ChevronDown } from 'lucide-react';
@@ -8,15 +9,20 @@ import { ChevronDown } from 'lucide-react';
 export function HubHeader() {
   const [productsOpen, setProductsOpen] = useState(false);
 
-  const navLinkStyles = "relative text-[15px] font-medium text-hub-foreground/70 hover:text-hub-foreground transition-colors duration-200";
+  const navLinkStyles = "relative text-[17px] font-medium text-hub-foreground/70 hover:text-hub-foreground transition-colors duration-200";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-hub-border/50 bg-hub-background/95 backdrop-blur-md">
-      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 lg:px-12">
-        <Link href="/" className="flex items-center">
-          <span className="font-display text-xl font-bold tracking-tight text-hub-foreground">
-            All Things Agents
-          </span>
+      <div className="mx-auto flex h-[88px] max-w-7xl items-center justify-between px-6 lg:px-12">
+        <Link href="/" className="flex items-center shrink-0">
+          <Image
+            src="/allthingsagents-logo.png"
+            alt="All Things Agents"
+            width={2000}
+            height={750}
+            className="h-[38px] w-auto object-contain"
+            priority
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-10 lg:gap-12">
@@ -29,7 +35,7 @@ export function HubHeader() {
             <button className={`flex items-center gap-1.5 ${navLinkStyles}`}>
               Products
               <ChevronDown
-                className={`h-4 w-4 transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`}
+                className={`h-[18px] w-[18px] transition-transform duration-200 ${productsOpen ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -65,6 +71,10 @@ export function HubHeader() {
 
           <Link href="/support" className={navLinkStyles}>
             Support
+          </Link>
+
+          <Link href="/why" className={navLinkStyles}>
+            Our Why
           </Link>
 
           <Link href="/about" className={navLinkStyles}>

@@ -1,7 +1,6 @@
 import { HubHeader } from '@/components/hub/hub-header';
 import { HubFooter } from '@/components/hub/hub-footer';
 import { HeroSection } from '@/components/hub/hero-section';
-import { PhilosophySection } from '@/components/hub/philosophy-section';
 import { ProductShowcase } from '@/components/hub/product-showcase';
 
 export default function HubHomePage() {
@@ -10,7 +9,6 @@ export default function HubHomePage() {
       <HubHeader />
       <main className="flex-1">
         <HeroSection />
-        <PhilosophySection />
         <ProductShowcase />
       </main>
       <HubFooter />

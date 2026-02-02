@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-hub-background">
+    <section className="relative overflow-hidden bg-hub-background">
       {/* Grid Pattern Background */}
       <GridPattern
         width={40}
@@ -20,7 +20,7 @@ export function HeroSection() {
         )}
       />
 
-      <div className="container relative z-10 mx-auto px-4 py-20">
+      <div className="container relative z-10 mx-auto px-4 pt-24 pb-20 md:pt-32 md:pb-24">
         <div className="max-w-4xl mx-auto text-center">
           {/* Headline */}
           <motion.h1

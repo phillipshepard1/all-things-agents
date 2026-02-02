@@ -32,7 +32,7 @@ export function ProductShowcase() {
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
-    <section id="products" ref={ref} className="py-24 bg-hub-background">
+    <section id="products" ref={ref} className="py-20 bg-hub-background">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -5,9 +5,9 @@ import { useInView } from 'motion/react';
 import { useRef } from 'react';
 
 const philosophyStatements = [
-  "Simplify everything.",
-  "Make real estate fun again.",
-  "Love your work, not your software.",
+  "Real Estate Should Be Easy.",
+  "Real Estate Should Be Fun.",
+  "Real Estate Should Be Life Changing.",
 ];
 
 export function PhilosophySection() {
@@ -15,7 +15,7 @@ export function PhilosophySection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="py-32 bg-hub-muted/30">
+    <section ref={ref} className="py-20 md:py-24 bg-hub-muted/30">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center space-y-8">
           {philosophyStatements.map((statement, index) => (
