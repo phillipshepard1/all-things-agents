@@ -1,5 +1,5 @@
 "use client";
-// Header component - v2.3
+// Header component - v2.4
 
 import Link from "next/link";
 import Image from "next/image";
