@@ -11,6 +11,7 @@
   --font-sans: var(--font-dm-sans);
   --font-serif: var(--font-playfair);
   --font-display: var(--font-outfit);
+  --font-signature: var(--font-dancing-script);
 
   /* Hub Colors */
   --color-hub-background: var(--hub-background);
@@ -263,6 +264,11 @@
     font-family: var(--font-outfit), sans-serif;
   }
 
+  /* Signature font for handwritten styles */
+  .font-signature {
+    font-family: var(--font-dancing-script), cursive;
+  }
+
   /* Fumadocs support pages font styling */
   [data-docs-layout] {
     font-family: var(--font-dm-sans), system-ui, sans-serif;
@@ -427,6 +433,28 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+
+  /* Safe area utilities for notched devices (iPhone X+, etc.) */
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pl-safe { padding-left: env(safe-area-inset-left, 0px); }
+  .pr-safe { padding-right: env(safe-area-inset-right, 0px); }
+  .px-safe {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .py-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .p-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .mt-safe { margin-top: env(safe-area-inset-top, 0px); }
+  .mb-safe { margin-bottom: env(safe-area-inset-bottom, 0px); }
 
   /* Homepage 25% Scale - Custom Text Sizes */
   /* These are 25% larger than default Tailwind sizes for better readability */

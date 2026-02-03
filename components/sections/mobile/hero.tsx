@@ -4,7 +4,17 @@ import { motion } from "motion/react";
 import { Iphone15Pro } from "@/components/ui/iphone-15-pro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Apple, Play, Filter, Bell } from "lucide-react";
+import { Play, Filter, Bell } from "lucide-react";
+import Link from "next/link";
+
+// Apple logo SVG component for guaranteed transparency
+function AppleLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 384 512" fill="currentColor">
+      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+    </svg>
+  );
+}
 
 // Follow Up Screen for the hero (synced with homepage)
 function FollowUpScreen() {
@@ -65,7 +75,7 @@ function FollowUpScreen() {
 
 export function MobileHero() {
   return (
-    <section className="relative overflow-hidden pt-24 pb-16 sm:pt-32 sm:pb-24">
+    <section className="relative overflow-hidden pt-24 pb-20 sm:pt-32 sm:pb-28 md:pt-36 md:pb-32">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-50 via-white to-white" />
 
@@ -73,32 +83,36 @@ export function MobileHero() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           {/* Left: Text content */}
           <div className="text-center lg:text-left">
-            <Badge variant="outline" className="mb-4 text-[#7a36dd] border-[#7a36dd]/30">
+            <Badge variant="outline" className="mb-6 sm:mb-8 px-4 py-2 text-sm sm:text-base md:text-home-base font-medium text-[#7a36dd] border-[#7a36dd]/30">
               iOS & Android
             </Badge>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 font-[family-name:var(--font-outfit)]">
+            <h1 className="text-4xl sm:text-5xl md:text-home-5xl lg:text-home-6xl font-bold tracking-tight text-gray-900 font-[family-name:var(--font-outfit)]">
               Your CRM,{" "}
               <span className="text-gradient">Always With You</span>
             </h1>
 
-            <p className="mt-6 text-lg sm:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0">
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-home-2xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
               Access your contacts, manage follow-ups, and close deals from anywhere.
               The Client Keeper mobile app puts your entire real estate business in your pocket.
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button size="lg" className="bg-black hover:bg-gray-800 text-white gap-2">
-                <Apple className="h-5 w-5" />
-                Download for iOS
-              </Button>
-              <Button size="lg" variant="outline" className="gap-2">
-                <Play className="h-5 w-5" />
-                Get on Android
-              </Button>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Link href="https://apps.apple.com/us/app/client-keeper-crm/id6756403940" target="_blank" rel="noopener noreferrer">
+                <Button className="h-14 sm:h-16 px-8 sm:px-12 text-lg sm:text-xl md:text-home-lg font-medium bg-black hover:bg-gray-800 text-white gap-3 w-full sm:w-auto">
+                  <AppleLogo className="size-7" />
+                  Download for iOS
+                </Button>
+              </Link>
+              <Link href="https://play.google.com/store/apps/details?id=com.clientkeeper.crm&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="h-14 sm:h-16 px-8 sm:px-12 text-lg sm:text-xl md:text-home-lg font-medium gap-3 w-full sm:w-auto">
+                  <Play className="size-7" />
+                  Google Play
+                </Button>
+              </Link>
             </div>
 
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-6 text-base sm:text-lg md:text-home-base text-muted-foreground">
               Free with your Client Keeper subscription
             </p>
           </div>

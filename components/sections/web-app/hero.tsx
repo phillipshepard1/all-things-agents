@@ -44,12 +44,11 @@ function DashboardScreen() {
         </div>
 
         {/* Stats row */}
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-3 gap-4">
           {[
             { label: "Active Leads", value: "24", change: "+3" },
-            { label: "Transactions", value: "8", change: "+1" },
-            { label: "Follow-ups Due", value: "12", change: "" },
-            { label: "Closed MTD", value: "$1.2M", change: "+15%" },
+            { label: "This Month", value: "8", change: "deals" },
+            { label: "Pipeline", value: "$1.2M", change: "" },
           ].map((stat) => (
             <div key={stat.label} className="rounded-xl bg-white p-4 shadow-sm">
               <div className="text-xs text-gray-500">{stat.label}</div>
@@ -64,15 +63,14 @@ function DashboardScreen() {
         </div>
 
         {/* Content grid */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {/* Recent Activity */}
-          <div className="col-span-2 rounded-xl bg-white p-4 shadow-sm">
+          <div className="rounded-xl bg-white p-4 shadow-sm">
             <div className="mb-3 text-sm font-medium text-gray-900">Recent Activity</div>
             <div className="space-y-2">
               {[
                 { name: "Sarah Johnson", action: "moved to Closing", time: "2m ago" },
                 { name: "Mike Chen", action: "new lead added", time: "15m ago" },
-                { name: "Emily Davis", action: "follow-up completed", time: "1h ago" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between rounded-lg bg-gray-50 p-2">
                   <div className="flex items-center gap-2">
@@ -90,12 +88,11 @@ function DashboardScreen() {
 
           {/* Upcoming */}
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <div className="mb-3 text-sm font-medium text-gray-900">Today&apos;s Tasks</div>
+            <div className="mb-3 text-sm font-medium text-gray-900">Tasks</div>
             <div className="space-y-2">
               {[
                 { task: "Call Alex M.", time: "10:00 AM" },
                 { task: "Property tour", time: "2:00 PM" },
-                { task: "Contract review", time: "4:30 PM" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <div className="h-4 w-4 rounded border-2 border-gray-300" />

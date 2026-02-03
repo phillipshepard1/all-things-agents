@@ -7,6 +7,7 @@ import { MobileDownload } from "@/components/sections/mobile/download";
 import { NotificationsPreview } from "@/components/sections/mobile/notifications-preview";
 import { MobileDesktopComparison } from "@/components/sections/mobile/comparison";
 import { VoiceDemo } from "@/components/sections/mobile/voice-demo";
+import { StickyBottomCTA } from "@/components/shared/sticky-bottom-cta";
 
 export const metadata = {
   title: "Mobile App | Client Keeper",
@@ -26,6 +27,7 @@ export default function MobileAppPage() {
         <MobileDesktopComparison />
         <MobileDownload />
       </main>
+      <StickyBottomCTA />
       <Footer />
     </div>
   );

@@ -13,6 +13,7 @@ import { DetailedFeatures } from "@/components/sections/detailed-features";
 import { Pricing } from "@/components/sections/pricing";
 import { FinalCTA } from "@/components/sections/final-cta";
 import { ActivityFeed } from "@/components/ui/activity-feed";
+import { StickyBottomCTA } from "@/components/shared/sticky-bottom-cta";
 import {
   JsonLd,
   generateOrganizationSchema,
@@ -127,6 +128,7 @@ export default function Home() {
         <Pricing />
         <FinalCTA />
       </main>
+      <StickyBottomCTA />
       <Footer />
       <ActivityFeed />
     </div>

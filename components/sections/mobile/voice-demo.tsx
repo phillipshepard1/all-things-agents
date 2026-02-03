@@ -257,7 +257,7 @@ export function VoiceDemo() {
           </div>
 
           {/* Features below */}
-          <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
             {[
               { label: "Voice Recognition", desc: "99% accurate" },
               { label: "Hands-Free Entry", desc: "Just talk, we type" },

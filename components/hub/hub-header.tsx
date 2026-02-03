@@ -4,10 +4,26 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { products } from '@/lib/products/config';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+const hubNavLinks = [
+  { href: '/support', label: 'Support' },
+  { href: '/why', label: 'Our Why' },
+  { href: '/about', label: 'About Us' },
+  { href: '/contact', label: 'Contact Us' },
+];
 
 export function HubHeader() {
   const [productsOpen, setProductsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinkStyles = "relative text-[17px] font-medium text-hub-foreground/70 hover:text-hub-foreground transition-colors duration-200";
 
@@ -25,6 +41,7 @@ export function HubHeader() {
           />
         </Link>
 
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-10 lg:gap-12">
           {/* Products Dropdown */}
           <div
@@ -85,6 +102,60 @@ export function HubHeader() {
             Contact Us
           </Link>
         </nav>
+
+        {/* Mobile Menu */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="min-h-[44px] min-w-[44px] text-hub-foreground"
+              aria-label="Open menu"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="right"
+            className="w-[300px] p-0 sm:w-[320px] bg-hub-background border-hub-border"
+          >
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <div className="flex h-full flex-col">
+              {/* Products Section */}
+              <div className="border-b border-hub-border/50 px-6 pt-14 pb-4">
+                <span className="text-xs font-medium uppercase tracking-wider text-hub-muted-foreground">
+                  Our Products
+                </span>
+                <div className="mt-3 flex flex-col gap-1">
+                  {Object.values(products).map((product) => (
+                    <SheetClose asChild key={product.id}>
+                      <Link
+                        href={`/${product.slug}/`}
+                        className="flex min-h-[44px] items-center rounded-lg px-3 text-base font-medium text-hub-foreground transition-colors hover:bg-hub-muted"
+                      >
+                        {product.name}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                </div>
+              </div>
+
+              {/* Hub Navigation */}
+              <nav className="flex flex-col px-6 pt-2">
+                {hubNavLinks.map((link) => (
+                  <SheetClose asChild key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="flex min-h-[44px] items-center border-b border-hub-border/50 text-base font-medium text-hub-foreground transition-colors hover:text-hub-accent"
+                    >
+                      {link.label}
+                    </Link>
+                  </SheetClose>
+                ))}
+              </nav>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );

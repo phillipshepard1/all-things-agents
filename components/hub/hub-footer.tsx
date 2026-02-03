@@ -8,7 +8,7 @@ export function HubFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <Link href="/" className="font-display text-lg font-bold text-hub-foreground">
+            <Link href="/" className="min-h-[44px] inline-flex items-center font-display text-lg font-bold text-hub-foreground">
               All Things Agents
             </Link>
             <p className="mt-2 text-sm text-hub-muted-foreground">
@@ -24,7 +24,7 @@ export function HubFooter() {
                 <li key={product.id}>
                   <Link
                     href={`/${product.slug}/`}
-                    className="text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors"
+                    className="min-h-[44px] inline-flex items-center text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors"
                   >
                     {product.name}
                   </Link>
@@ -38,12 +38,12 @@ export function HubFooter() {
             <h3 className="font-semibold text-hub-foreground mb-3">Company</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/privacy-policy" className="text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors">
+                <Link href="/privacy-policy" className="min-h-[44px] inline-flex items-center text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms-of-service" className="text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors">
+                <Link href="/terms-of-service" className="min-h-[44px] inline-flex items-center text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors">
                   Terms of Service
                 </Link>
               </li>
@@ -55,7 +55,7 @@ export function HubFooter() {
             <h3 className="font-semibold text-hub-foreground mb-3">Support</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/client-keeper-crm/support/" className="text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors">
+                <Link href="/client-keeper-crm/support/" className="min-h-[44px] inline-flex items-center text-sm text-hub-muted-foreground hover:text-hub-foreground transition-colors">
                   Client Keeper Help
                 </Link>
               </li>

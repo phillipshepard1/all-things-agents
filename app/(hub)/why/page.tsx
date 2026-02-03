@@ -35,8 +35,8 @@ export default function WhyPage() {
   return (
     <div className="bg-hub-background">
       {/* Section 1 — Hero */}
-      <section className="relative pt-20 pb-12 md:pt-28 md:pb-16">
-        <div className="mx-auto max-w-3xl px-6 lg:px-12">
+      <section className="relative pt-20 pb-6 md:pt-28 md:pb-8">
+        <div className="mx-auto max-w-4xl px-6 lg:px-12">
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -57,7 +57,7 @@ export default function WhyPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25, ease: 'easeOut' }}
-            className="mt-6 text-xl md:text-2xl text-hub-muted-foreground leading-relaxed"
+            className="mt-6 text-xl md:text-2xl font-medium text-hub-muted-foreground leading-relaxed"
           >
             We&apos;re real estate agents who got tired of fighting our own
             software. So we started building something&nbsp;better.
@@ -66,15 +66,15 @@ export default function WhyPage() {
       </section>
 
       {/* Section 2 — The Problem */}
-      <section className="py-12 md:py-16 bg-hub-muted/40">
-        <div className="mx-auto max-w-3xl px-6 lg:px-12">
+      <section className="py-6 md:py-8">
+        <div className="mx-auto max-w-4xl px-6 lg:px-12">
           <AnimatedSection>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-hub-foreground tracking-tight leading-tight">
               The Tools Became the&nbsp;Problem.
             </h2>
           </AnimatedSection>
 
-          <div className="mt-8 space-y-5 text-lg md:text-xl text-hub-muted-foreground leading-relaxed">
+          <div className="mt-8 space-y-5 text-xl md:text-2xl font-medium text-hub-muted-foreground leading-relaxed">
             <AnimatedSection delay={0.1}>
               <p>
                 You know the feeling. You sit down to send a client a quick
@@ -119,15 +119,15 @@ export default function WhyPage() {
       </section>
 
       {/* Section 3 — Our Approach */}
-      <section className="py-12 md:py-16">
-        <div className="mx-auto max-w-3xl px-6 lg:px-12">
+      <section className="py-6 md:py-8">
+        <div className="mx-auto max-w-4xl px-6 lg:px-12">
           <AnimatedSection>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-hub-foreground tracking-tight leading-tight">
               So We Started Building Our&nbsp;Own.
             </h2>
           </AnimatedSection>
 
-          <div className="mt-8 space-y-5 text-lg md:text-xl text-hub-muted-foreground leading-relaxed">
+          <div className="mt-8 space-y-5 text-xl md:text-2xl font-medium text-hub-muted-foreground leading-relaxed">
             <AnimatedSection delay={0.1}>
               <p>
                 We&apos;re not trying to be your everything platform. We
@@ -158,33 +158,13 @@ export default function WhyPage() {
             </AnimatedSection>
           </div>
 
-          <AnimatedSection delay={0.3} className="mt-12">
-            <div className="mx-auto max-w-md">
-              <Image
-                src="/nicole-and-phillip.png"
-                alt="Nicole and Phillip Shepard, founders of All Things Agents"
-                width={1400}
-                height={900}
-                className="w-full h-auto"
-              />
-              <p className="mt-3 text-center text-base text-hub-muted-foreground">
-                Phillip &amp; Nicole Shepard — Founders
-              </p>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* Section 4 — From One Agent to Another */}
-      <section className="py-12 md:py-16 bg-hub-muted/40">
-        <div className="mx-auto max-w-3xl px-6 lg:px-12">
-          <AnimatedSection>
+          <AnimatedSection className="mt-12">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-hub-foreground tracking-tight leading-tight">
               From One Agent to&nbsp;Another.
             </h2>
           </AnimatedSection>
 
-          <div className="mt-8 space-y-5 text-lg md:text-xl text-hub-muted-foreground leading-relaxed">
+          <div className="mt-8 space-y-5 text-xl md:text-2xl font-medium text-hub-muted-foreground leading-relaxed">
             <AnimatedSection delay={0.1}>
               <p>
                 Every product we make is built by agents, for agents. Not
@@ -207,31 +187,36 @@ export default function WhyPage() {
               </p>
             </AnimatedSection>
           </div>
-        </div>
-      </section>
 
-      {/* The Motto */}
-      <section className="py-14 md:py-20">
-        <div className="mx-auto max-w-5xl px-6 lg:px-12">
-          <div className="space-y-8 text-center">
-            {[
-              'Real Estate Should Be Easy.',
-              'Real Estate Should Be Fun.',
-              'Real Estate Should Be Life\u00a0Changing.',
-            ].map((statement, index) => (
-              <AnimatedSection key={index} delay={index * 0.15}>
-                <p className="font-display text-3xl md:text-4xl lg:text-5xl font-semibold text-hub-foreground">
-                  {statement}
+          <AnimatedSection delay={0.3} className="mt-16">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+              {/* Left: Signature sign-off */}
+              <div className="flex-1 text-center md:text-right">
+                <p className="font-signature text-3xl md:text-4xl text-hub-foreground">
+                  — Phillip & Nicole
                 </p>
-              </AnimatedSection>
-            ))}
-          </div>
+              </div>
+
+              {/* Right: Photo */}
+              <div className="flex-1">
+                <div className="max-w-xs mx-auto md:mx-0">
+                  <Image
+                    src="/nicole-and-phillip.png"
+                    alt="Phillip and Nicole Shepard"
+                    width={1400}
+                    height={900}
+                    className="w-full h-auto rounded-lg shadow-md ring-1 ring-black/5"
+                  />
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-12 md:py-16 bg-hub-muted/40">
-        <div className="mx-auto max-w-3xl px-6 lg:px-12 text-center">
+      <section className="py-12 md:py-16">
+        <div className="mx-auto max-w-4xl px-6 lg:px-12 text-center">
           <AnimatedSection>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-hub-foreground tracking-tight">
               Come See What We&apos;re&nbsp;Building.

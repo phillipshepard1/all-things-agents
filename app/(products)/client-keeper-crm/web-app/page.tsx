@@ -6,6 +6,7 @@ import { DashboardPreview } from "@/components/sections/web-app/dashboard-previe
 import { WebAppScreens } from "@/components/sections/web-app/screens";
 import { WebMobileComparison } from "@/components/sections/web-app/comparison";
 import { WebAppCTA } from "@/components/sections/web-app/cta";
+import { StickyBottomCTA } from "@/components/shared/sticky-bottom-cta";
 
 export const metadata = {
   title: "Web App | Client Keeper",
@@ -24,6 +25,7 @@ export default function WebAppPage() {
         <WebMobileComparison />
         <WebAppCTA />
       </main>
+      <StickyBottomCTA />
       <Footer />
     </div>
   );

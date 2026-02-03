@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, DM_Sans, Plus_Jakarta_Sans, Playfair_Display, Inter, Poppins, Nunito, Manrope, Cormorant_Garamond, Quicksand, Raleway, Rubik, Montserrat, Lexend, Urbanist } from "next/font/google";
+import { Outfit, DM_Sans, Plus_Jakarta_Sans, Playfair_Display, Inter, Poppins, Nunito, Manrope, Cormorant_Garamond, Quicksand, Raleway, Rubik, Montserrat, Lexend, Urbanist, Dancing_Script } from "next/font/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import "./globals.css";
 
@@ -97,6 +97,12 @@ const urbanist = Urbanist({
   display: "swap",
 });
 
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "All Things Agents | Real Estate Software Suite",
   description: "A suite of simple, powerful tools for real estate agents. CRM, social media scheduling, and beautiful websites - all designed to make real estate fun again.",
@@ -117,7 +123,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className={`${outfit.variable} ${dmSans.variable} ${plusJakarta.variable} ${playfair.variable} ${inter.variable} ${poppins.variable} ${nunito.variable} ${manrope.variable} ${cormorantGaramond.variable} ${quicksand.variable} ${raleway.variable} ${rubik.variable} ${montserrat.variable} ${lexend.variable} ${urbanist.variable} font-sans antialiased`}
+        className={`${outfit.variable} ${dmSans.variable} ${plusJakarta.variable} ${playfair.variable} ${inter.variable} ${poppins.variable} ${nunito.variable} ${manrope.variable} ${cormorantGaramond.variable} ${quicksand.variable} ${raleway.variable} ${rubik.variable} ${montserrat.variable} ${lexend.variable} ${urbanist.variable} ${dancingScript.variable} font-sans antialiased`}
       >
         <RootProvider theme={{ defaultTheme: "light", forcedTheme: "light" }}>
           {children}
