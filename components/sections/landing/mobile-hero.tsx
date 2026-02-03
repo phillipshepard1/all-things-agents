@@ -397,7 +397,7 @@ export function MobileHero() {
                   <span className="text-sm font-medium">App Store</span>
                 </Link>
                 <Link
-                  href="https://play.google.com/store/apps/details?hl=en_US&id=com.app.crmrealtorvtwo"
+                  href="https://play.google.com/store/apps/details?id=com.clientkeeper.crm"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-gray-900 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"

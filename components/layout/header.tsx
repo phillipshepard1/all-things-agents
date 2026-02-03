@@ -243,7 +243,7 @@ export function Header() {
                         <span className="text-sm font-medium">App Store</span>
                       </a>
                       <a
-                        href="https://play.google.com/store/apps/details?id=com.clientkeepercrm.app"
+                        href="https://play.google.com/store/apps/details?id=com.clientkeeper.crm"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex min-h-[48px] items-center justify-center gap-3 rounded-lg bg-black text-white px-4 py-2 transition-opacity hover:opacity-90"
