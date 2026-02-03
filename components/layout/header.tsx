@@ -232,7 +232,7 @@ export function Header() {
                     </span>
                     <div className="mt-3 flex flex-col gap-2">
                       <a
-                        href="https://apps.apple.com/us/app/client-keeper-real-estate-crm/id6468638954"
+                        href="https://apps.apple.com/us/app/client-keeper-crm/id6756403940"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex min-h-[48px] items-center justify-center gap-3 rounded-lg bg-black text-white px-4 py-2 transition-opacity hover:opacity-90"
