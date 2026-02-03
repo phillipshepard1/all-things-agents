@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { AuthRedirectHandler } from "@/components/auth/auth-redirect-handler";
-import { Hero } from "@/components/sections/hero";
+import { HeroStrikethroughSplitReveal } from "@/components/sections/hero-options/hero-strikethrough-split-reveal";
 import { SocialProof } from "@/components/sections/social-proof";
 import { FeaturesGrid } from "@/components/sections/features-grid";
 import { MyraSection } from "@/components/sections/myra-section";
@@ -117,7 +117,7 @@ export default function Home() {
 
       <Header />
       <main className="flex-1">
-        <Hero />
+        <HeroStrikethroughSplitReveal />
         <SocialProof />
         <FeaturesGrid />
         <MyraSection />
