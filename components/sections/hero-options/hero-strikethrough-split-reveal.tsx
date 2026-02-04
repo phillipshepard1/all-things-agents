@@ -113,7 +113,7 @@ export function HeroStrikethroughSplitReveal() {
               className="mt-8"
             >
               <h1 className="text-5xl font-extrabold tracking-tight text-gradient sm:text-6xl md:text-7xl lg:text-8xl">
-                Client<span className="inline-block w-3 md:w-4"></span>Keeper.
+                Client<span className="inline-block w-3 md:w-4"></span>Keeper<span className="inline-block w-3 md:w-4"></span>CRM.
               </h1>
             </motion.div>
           </div>
