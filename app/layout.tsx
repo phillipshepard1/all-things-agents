@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Outfit, DM_Sans, Plus_Jakarta_Sans, Playfair_Display, Inter, Poppins, Nunito, Manrope, Cormorant_Garamond, Quicksand, Raleway, Rubik, Montserrat, Lexend, Urbanist, Dancing_Script, Caveat } from "next/font/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -132,24 +132,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
-      <head>
-        {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3DBF0QT5HC"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3DBF0QT5HC');
-          `}
-        </Script>
-      </head>
       <body
         className={`${outfit.variable} ${dmSans.variable} ${plusJakarta.variable} ${playfair.variable} ${inter.variable} ${poppins.variable} ${nunito.variable} ${manrope.variable} ${cormorantGaramond.variable} ${quicksand.variable} ${raleway.variable} ${rubik.variable} ${montserrat.variable} ${lexend.variable} ${urbanist.variable} ${dancingScript.variable} ${caveat.variable} font-sans antialiased`}
       >
+        <GoogleAnalytics />
         <RootProvider theme={{ defaultTheme: "light", forcedTheme: "light" }}>
           {children}
         </RootProvider>
