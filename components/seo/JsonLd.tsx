@@ -164,3 +164,86 @@ export function generateBreadcrumbSchema(items: { name: string; url: string }[])
     })),
   };
 }
+
+export function generateMobileAppSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "Client Keeper CRM",
+    "operatingSystem": "iOS, Android",
+    "applicationCategory": "BusinessApplication",
+    "description": "AI-powered CRM app built specifically for real estate agents. Features MYRA AI assistant for voice-powered data entry, automated follow-up reminders, and transaction tracking.",
+    "offers": {
+      "@type": "Offer",
+      "price": "19.00",
+      "priceCurrency": "USD",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "19.00",
+        "priceCurrency": "USD",
+        "unitCode": "MON",
+      },
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "500",
+      "bestRating": "5",
+      "worstRating": "1",
+    },
+    "downloadUrl": [
+      "https://apps.apple.com/us/app/client-keeper-crm/id6756403940",
+      "https://play.google.com/store/apps/details?id=com.clientkeeper.crm",
+    ],
+  };
+}
+
+export function generateCollectionPageSchema(params: {
+  name: string;
+  description: string;
+  url: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": params.name,
+    "description": params.description,
+    "url": params.url,
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Client Keeper",
+      "url": "https://clientkeeper.io",
+    },
+  };
+}
+
+export function generateWebAppSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Client Keeper CRM Web App",
+    "applicationCategory": "BusinessApplication",
+    "browserRequirements": "Requires JavaScript. Requires HTML5.",
+    "description": "Full-featured web-based CRM for real estate agents. Access your contacts, pipeline, and AI assistant MYRA from any browser.",
+    "offers": {
+      "@type": "Offer",
+      "price": "19.00",
+      "priceCurrency": "USD",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "19.00",
+        "priceCurrency": "USD",
+        "unitCode": "MON",
+      },
+    },
+    "featureList": [
+      "Dashboard with pipeline overview",
+      "Contact management",
+      "MYRA AI assistant",
+      "Transaction tracking",
+      "Follow-up reminders",
+      "Email integration",
+      "Team collaboration",
+    ],
+  };
+}

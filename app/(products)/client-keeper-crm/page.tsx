@@ -23,9 +23,9 @@ import {
 
 // Homepage SEO metadata
 export const metadata: Metadata = {
-  title: "Client Keeper CRM | Real Estate CRM Without the Tech Overwhelm",
+  title: "Real Estate CRM for Agents | Client Keeper - No Tech Overwhelm",
   description:
-    "Manage your clients, close more deals, and grow your real estate business with Client Keeper - the AI-powered CRM built specifically for agents. Features MYRA AI assistant, automated follow-ups, and transaction tracking.",
+    "Manage clients, close deals & grow your real estate business with Client Keeper's AI-powered CRM. MYRA handles follow-ups & transactions automatically.",
   keywords: [
     "real estate CRM",
     "CRM for real estate agents",
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
     canonical: "https://clientkeeper.io",
   },
   openGraph: {
-    title: "Client Keeper CRM | Real Estate CRM Without the Tech Overwhelm",
+    title: "Real Estate CRM for Agents | Client Keeper - No Tech Overwhelm",
     description:
-      "AI-powered CRM built specifically for real estate agents. Manage clients, automate follow-ups, and close more deals with MYRA AI assistant.",
+      "AI-powered CRM built for real estate agents. Manage clients, automate follow-ups, and close more deals with MYRA AI.",
     url: "https://clientkeeper.io",
     siteName: "Client Keeper",
     type: "website",
@@ -58,9 +58,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Client Keeper CRM | Real Estate CRM Without the Tech Overwhelm",
+    title: "Real Estate CRM for Agents | Client Keeper - No Tech Overwhelm",
     description:
-      "AI-powered CRM built specifically for real estate agents. Features MYRA AI assistant for effortless data entry.",
+      "AI-powered CRM built for real estate agents. MYRA AI handles data entry effortlessly.",
     images: ["/og-image.png"],
   },
 };

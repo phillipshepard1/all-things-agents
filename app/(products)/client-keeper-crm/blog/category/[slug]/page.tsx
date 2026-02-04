@@ -5,6 +5,9 @@ import { Calendar, Clock, ArrowRight, ArrowLeft, FolderOpen } from 'lucide-react
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
+import { JsonLd, generateBreadcrumbSchema } from '@/components/seo/JsonLd'
+
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clientkeeper.io'
 
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
@@ -125,8 +128,15 @@ export default async function BlogCategoryPage(props: {
     }
   }
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: baseUrl },
+    { name: 'Blog', url: `${baseUrl}/client-keeper-crm/blog` },
+    { name: category.title, url: `${baseUrl}/client-keeper-crm/blog/category/${params.slug}` },
+  ])
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <JsonLd data={breadcrumbSchema} />
       <Header />
 
       <main className="flex-1">

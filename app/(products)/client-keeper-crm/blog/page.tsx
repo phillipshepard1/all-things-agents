@@ -5,21 +5,36 @@ import { Calendar, Clock, ArrowRight, FolderOpen } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
+import { JsonLd, generateCollectionPageSchema } from '@/components/seo/JsonLd'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clientkeeper.io'
 
 export const metadata: Metadata = {
-  title: 'Blog | Client Keeper',
-  description: 'Tips, tutorials, and insights for managing your client relationships and growing your real estate business.',
+  title: 'Real Estate CRM Blog | Client Keeper',
+  description: 'Tips, tutorials, and insights for managing your client relationships and growing your real estate business with Client Keeper CRM.',
   alternates: {
-    canonical: `${baseUrl}/blog`,
+    canonical: `${baseUrl}/client-keeper-crm/blog`,
   },
   openGraph: {
-    title: 'Blog | Client Keeper',
+    title: 'Real Estate CRM Blog | Client Keeper',
     description: 'Tips, tutorials, and insights for managing your client relationships and growing your real estate business.',
-    url: `${baseUrl}/blog`,
+    url: `${baseUrl}/client-keeper-crm/blog`,
     siteName: 'Client Keeper',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Client Keeper Blog - Real Estate CRM Tips',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Real Estate CRM Blog | Client Keeper',
+    description: 'Tips and insights for growing your real estate business with Client Keeper CRM.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -87,8 +102,15 @@ export default async function BlogPage() {
     }
   }
 
+  const blogSchema = generateCollectionPageSchema({
+    name: 'Client Keeper Blog',
+    description: 'Tips, tutorials, and insights for managing your client relationships and growing your real estate business.',
+    url: `${baseUrl}/client-keeper-crm/blog`,
+  })
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <JsonLd data={blogSchema} />
       <Header />
 
       <main className="flex-1">
