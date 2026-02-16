@@ -112,7 +112,7 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://clientkeeper.io"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.allthingsagents.com"
   ),
   title: "All Things Agents | Real Estate Software Suite",
   description: "A suite of simple, powerful tools for real estate agents. CRM, social media scheduling, and beautiful websites - all designed to make real estate fun again.",
