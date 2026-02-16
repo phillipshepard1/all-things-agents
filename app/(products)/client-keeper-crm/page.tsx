@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper CRM - Real Estate CRM Without the Tech Overwhelm",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: "Real Estate CRM for Agents | Client Keeper - No Tech Overwhelm",
     description:
       "AI-powered CRM built for real estate agents. MYRA AI handles data entry effortlessly.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

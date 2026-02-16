@@ -119,7 +119,7 @@ export default async function BlogPostPage(props: {
     title: post.title,
     description: post.excerpt || post.meta_description || `Read ${post.title} on the Client Keeper blog.`,
     url: postUrl,
-    image: post.featured_image || post.og_image || `${baseUrl}/og-image.png`,
+    image: post.featured_image || post.og_image || `${baseUrl}/og/client-keeper.png`,
     datePublished: post.published_at || post.created_at,
     dateModified: post.updated_at,
     authorName: 'Client Keeper Team',

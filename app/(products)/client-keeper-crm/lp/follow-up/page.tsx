@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper Follow-Up CRM for Real Estate",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     title: "Automated Follow-Up CRM for Real Estate | Client Keeper",
     description:
       "Never lose a client to forgetting. Automatic reminders for birthdays and anniversaries.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

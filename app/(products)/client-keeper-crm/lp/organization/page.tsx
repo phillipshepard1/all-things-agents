@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper CRM - From Chaos to Calm",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     title: "Organized Real Estate CRM | From Chaos to Calm | Client Keeper",
     description:
       "Sticky notes, spreadsheets, crossed fingers? There's a better way. Get organized with Client Keeper.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

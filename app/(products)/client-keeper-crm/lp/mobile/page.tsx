@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper Mobile CRM for Real Estate Agents",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: "Mobile CRM for Real Estate Agents | Client Keeper",
     description:
       "A real estate CRM you can run from anywhere. Update contacts and never miss a follow-up.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

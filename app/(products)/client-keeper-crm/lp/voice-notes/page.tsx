@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper Voice Notes CRM for Real Estate",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: "Voice CRM for Real Estate | No Typing | Client Keeper",
     description:
       "Just talk. Your CRM updates itself. Send a voice note and MYRA handles the rest.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

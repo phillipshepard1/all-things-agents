@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper CRM - Work-Life Balance for Real Estate Agents",
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     title: "Real Estate CRM for Work-Life Balance | Client Keeper",
     description:
       "Stop working at 10pm. MYRA handles the busywork so you can be present for what matters.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

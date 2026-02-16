@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og/client-keeper.png",
         width: 1200,
         height: 630,
         alt: "Client Keeper Web App - Real Estate CRM Dashboard",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     title: "Web-Based Real Estate CRM | Client Keeper Dashboard & Features",
     description:
       "Full-featured real estate CRM accessible from any browser with AI assistant MYRA.",
-    images: ["/og-image.png"],
+    images: ["/og/client-keeper.png"],
   },
 };
 

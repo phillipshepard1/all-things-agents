@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og/client-keeper.png',
         width: 1200,
         height: 630,
         alt: 'Client Keeper Blog - Real Estate CRM Tips',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Real Estate CRM Blog | Client Keeper',
     description: 'Tips and insights for growing your real estate business with Client Keeper CRM.',
-    images: ['/og-image.png'],
+    images: ['/og/client-keeper.png'],
   },
 }
 
