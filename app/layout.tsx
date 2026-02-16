@@ -123,6 +123,29 @@ export const metadata: Metadata = {
     "real estate websites",
     "real estate tools",
   ],
+  openGraph: {
+    title: "All Things Agents | Real Estate Software Suite",
+    description:
+      "A suite of simple, powerful tools for real estate agents. CRM, social media scheduling, and beautiful websites - all designed to make real estate fun again.",
+    url: "https://www.allthingsagents.com",
+    siteName: "All Things Agents",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "All Things Agents - Real Estate Software Suite",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "All Things Agents | Real Estate Software Suite",
+    description:
+      "A suite of simple, powerful tools for real estate agents. CRM, social media scheduling, and beautiful websites.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
