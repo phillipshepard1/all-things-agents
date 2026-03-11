@@ -300,6 +300,85 @@
   }
 }
 
+/* Support docs sidebar — full-height background */
+@media (min-width: 768px) {
+  #nd-docs-layout::before {
+    content: '';
+    grid-row: 1 / -1;
+    grid-column: 1;
+    background-color: var(--color-fd-card);
+    border-inline-end: 1px solid var(--color-fd-border);
+    pointer-events: none;
+  }
+}
+
+/* Support docs sidebar — remove independent scroll, eliminate blank space */
+@media (min-width: 768px) {
+  #nd-docs-layout [data-sidebar-placeholder] {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  #nd-docs-layout #nd-sidebar {
+    position: relative !important;
+  }
+
+  #nd-docs-layout #nd-sidebar [data-radix-scroll-area-viewport] {
+    overflow: visible !important;
+    overscroll-behavior: unset !important;
+  }
+
+  #nd-docs-layout #nd-sidebar [data-radix-scroll-area-viewport] > div {
+    min-height: unset !important;
+  }
+
+  /* Hide Radix scrollbar since sidebar no longer scrolls independently */
+  #nd-docs-layout #nd-sidebar [role="scrollbar"] {
+    display: none !important;
+  }
+}
+
+/* Support docs sidebar — enlarge fonts & improve spacing */
+@media (min-width: 768px) {
+  #nd-docs-layout [data-sidebar-placeholder] {
+    --fd-sidebar-width: 320px !important;
+  }
+}
+
+#nd-sidebar {
+  font-size: 1.0625rem !important; /* 17px */
+  font-weight: 500 !important;
+}
+
+#nd-sidebar [data-radix-scroll-area-viewport] > div > p {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fd-muted-foreground);
+}
+
+#nd-sidebar a[data-active],
+#nd-sidebar a[href],
+#nd-sidebar button[data-collapsible] {
+  padding-block: 0.5rem;
+  padding-inline: 0.625rem;
+}
+
+#nd-sidebar .flex.flex-col.gap-2 a {
+  font-size: 0.9375rem;
+}
+
+/* Support docs content — larger typography for readability */
+#nd-page h1:first-of-type {
+  font-size: 2.25rem !important; /* 36px, up from ~28px */
+  font-weight: 700 !important;
+}
+
+#nd-page > p.text-lg {
+  font-size: 1.25rem !important; /* 20px, up from 18px */
+}
+
 @layer utilities {
   /* Purple gradient for special elements */
   .purple-gradient {

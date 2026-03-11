@@ -12,6 +12,12 @@ import { TiptapContent } from '@/components/support/tiptap-content'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
+interface Parent {
+  id: string
+  title: string
+  slug: string
+}
+
 interface Category {
   id: string
   slug: string
@@ -28,6 +34,7 @@ export default function EditDocPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [parents, setParents] = useState<Parent[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [previewMode, setPreviewMode] = useState(false)
   const [docProductId, setDocProductId] = useState<string | null>(null)
@@ -36,6 +43,7 @@ export default function EditDocPage() {
     title: '',
     slug: '',
     description: '',
+    selectedParentId: '',
     category_id: '',
     video_url: '',
     video_position: 'bottom' as 'top' | 'middle' | 'bottom',
@@ -46,7 +54,7 @@ export default function EditDocPage() {
   const [content, setContent] = useState<any>(null)
   const [editorKey, setEditorKey] = useState(0) // Key to force editor remount
 
-  // Fetch existing doc and categories
+  // Fetch existing doc, parents, and categories
   useEffect(() => {
     async function fetchData() {
       try {
@@ -64,7 +72,32 @@ export default function EditDocPage() {
         // Store the doc's product_id
         setDocProductId(data.product_id || null)
 
-        // Fetch categories filtered by the doc's product_id
+        // Fetch parents filtered by the doc's product_id
+        let parentQuery = supabase
+          .from('doc_parents')
+          .select('id, title, slug')
+          .eq('is_active', true)
+          .order('sort_order')
+
+        if (data.product_id) {
+          parentQuery = parentQuery.eq('product_id', data.product_id)
+        }
+
+        const { data: parentsData } = await parentQuery
+        if (parentsData) setParents(parentsData)
+
+        // Look up which parent the doc's category belongs to
+        let docParentId = ''
+        if (data.category_id) {
+          const { data: catData } = await supabase
+            .from('doc_categories')
+            .select('parent_id')
+            .eq('id', data.category_id)
+            .single()
+          docParentId = catData?.parent_id || ''
+        }
+
+        // Fetch categories filtered by the doc's product_id and parent
         let catQuery = supabase
           .from('doc_categories')
           .select('id, slug, title')
@@ -75,6 +108,10 @@ export default function EditDocPage() {
           catQuery = catQuery.eq('product_id', data.product_id)
         }
 
+        if (docParentId) {
+          catQuery = catQuery.eq('parent_id', docParentId)
+        }
+
         const { data: cats } = await catQuery
         if (cats) setCategories(cats)
 
@@ -82,6 +119,7 @@ export default function EditDocPage() {
           title: data.title || '',
           slug: data.slug || '',
           description: data.description || '',
+          selectedParentId: docParentId,
           category_id: data.category_id || '',
           video_url: data.video_url || '',
           video_position: data.video_position || 'bottom',
@@ -115,6 +153,29 @@ export default function EditDocPage() {
     // Set the editor content and force editor remount
     setContent(data.content)
     setEditorKey(prev => prev + 1)
+  }
+
+  // Handle parent change: re-fetch categories for the new parent
+  const handleParentChange = async (newParentId: string) => {
+    setFormData(prev => ({ ...prev, selectedParentId: newParentId, category_id: '' }))
+
+    const supabase = createClient()
+    let catQuery = supabase
+      .from('doc_categories')
+      .select('id, slug, title')
+      .eq('is_active', true)
+      .order('sort_order')
+
+    if (docProductId) {
+      catQuery = catQuery.eq('product_id', docProductId)
+    }
+
+    if (newParentId) {
+      catQuery = catQuery.eq('parent_id', newParentId)
+    }
+
+    const { data: cats } = await catQuery
+    setCategories(cats || [])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -255,7 +316,15 @@ export default function EditDocPage() {
                 Slug
               </label>
               <div className="flex items-center">
-                <span className="text-sm text-gray-500 mr-1">/support/</span>
+                {(() => {
+                  const parentSlug = parents.find(p => p.id === formData.selectedParentId)?.slug
+                  const categorySlug = categories.find(c => c.id === formData.category_id)?.slug
+                  return (
+                    <span className="text-sm text-gray-500 mr-1">
+                      /support/{parentSlug ? `${parentSlug}/` : ''}{categorySlug ? `${categorySlug}/` : ''}
+                    </span>
+                  )
+                })()}
                 <input
                   type="text"
                   id="slug"
@@ -265,6 +334,25 @@ export default function EditDocPage() {
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="parent" className="block text-sm font-medium text-gray-700 mb-1">
+                Parent
+              </label>
+              <select
+                id="parent"
+                value={formData.selectedParentId}
+                onChange={(e) => handleParentChange(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              >
+                <option value="">Select a parent</option>
+                {parents.map((parent) => (
+                  <option key={parent.id} value={parent.id}>
+                    {parent.title}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

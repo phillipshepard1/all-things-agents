@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -8,45 +8,18 @@ import { createClient } from '@/lib/supabase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
-export default function NewCategoryPage() {
+export default function NewParentPage() {
   const router = useRouter()
   const { selectedProduct } = useAdminProduct()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [parents, setParents] = useState<{id: string, title: string}[]>([])
 
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     description: '',
     is_active: true,
-    parent_id: '',
   })
-
-  // Fetch parents filtered by product
-  useEffect(() => {
-    async function fetchParents() {
-      const supabase = createClient()
-      let query = supabase
-        .from('doc_parents')
-        .select('id, title')
-        .eq('is_active', true)
-        .order('sort_order')
-
-      if (selectedProduct && selectedProduct !== 'hub') {
-        query = query.eq('product_id', selectedProduct)
-      }
-
-      const { data } = await query
-      if (data) {
-        setParents(data)
-        // Default to "General" parent
-        const generalParent = data.find((p) => p.title === 'General')
-        setFormData((prev) => ({ ...prev, parent_id: generalParent?.id || '' }))
-      }
-    }
-    fetchParents()
-  }, [selectedProduct])
 
   function generateSlug(title: string): string {
     return title
@@ -68,7 +41,7 @@ export default function NewCategoryPage() {
 
     // Require a product selection
     if (!selectedProduct || selectedProduct === 'hub') {
-      setError('Please select a product before creating a category')
+      setError('Please select a product before creating a parent')
       return
     }
 
@@ -80,7 +53,7 @@ export default function NewCategoryPage() {
 
       // Get max sort_order for this product
       let orderQuery = supabase
-        .from('doc_categories')
+        .from('doc_parents')
         .select('sort_order')
         .order('sort_order', { ascending: false })
         .limit(1)
@@ -94,25 +67,21 @@ export default function NewCategoryPage() {
       const nextOrder = (existing?.[0]?.sort_order || 0) + 1
 
       const { error: insertError } = await supabase
-        .from('doc_categories')
+        .from('doc_parents')
         .insert({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description || null,
-          is_active: formData.is_active,
-          parent_id: formData.parent_id || null,
+          ...formData,
           sort_order: nextOrder,
           product_id: selectedProduct,
         })
 
       if (insertError) throw insertError
 
-      // Revalidate support pages to reflect new category in navigation
+      // Revalidate support pages to reflect new parent in navigation
       await revalidateSupportPages({ type: 'category' })
 
-      router.push('/admin/docs/categories')
+      router.push('/admin/docs/parents')
     } catch (e: any) {
-      setError(e.message || 'Failed to create category')
+      setError(e.message || 'Failed to create parent')
       setSaving(false)
     }
   }
@@ -121,14 +90,14 @@ export default function NewCategoryPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/docs/categories"
+          href="/admin/docs/parents"
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">New Category</h1>
-          <p className="text-sm text-gray-500">Create a new documentation category</p>
+          <h1 className="text-2xl font-bold text-gray-900">New Parent</h1>
+          <p className="text-sm text-gray-500">Create a new platform parent section</p>
         </div>
       </div>
 
@@ -142,26 +111,6 @@ export default function NewCategoryPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Parent
-            </label>
-            <select
-              value={formData.parent_id}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, parent_id: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            >
-              <option value="">Select a parent</option>
-              {parents.map((parent) => (
-                <option key={parent.id} value={parent.id}>
-                  {parent.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
               Title
             </label>
             <input
@@ -170,7 +119,7 @@ export default function NewCategoryPage() {
               onChange={(e) => handleTitleChange(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="e.g., Getting Started"
+              placeholder="e.g., Web App"
             />
           </div>
 
@@ -178,19 +127,16 @@ export default function NewCategoryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Slug
             </label>
-            <div className="flex items-center">
-              <span className="text-gray-500 text-sm mr-2">/support/</span>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, slug: e.target.value }))
-                }
-                required
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="getting-started"
-              />
-            </div>
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, slug: e.target.value }))
+              }
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="web-app"
+            />
           </div>
 
           <div>
@@ -204,7 +150,7 @@ export default function NewCategoryPage() {
               }
               rows={2}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              placeholder="A brief description of this category"
+              placeholder="A brief description of this parent section"
             />
           </div>
 
@@ -226,7 +172,7 @@ export default function NewCategoryPage() {
 
         <div className="flex items-center justify-end gap-3">
           <Link
-            href="/admin/docs/categories"
+            href="/admin/docs/parents"
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
             Cancel
@@ -237,7 +183,7 @@ export default function NewCategoryPage() {
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
           >
             <Save className="h-4 w-4" />
-            {saving ? 'Creating...' : 'Create Category'}
+            {saving ? 'Creating...' : 'Create Parent'}
           </button>
         </div>
       </form>

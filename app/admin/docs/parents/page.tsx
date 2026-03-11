@@ -7,129 +7,96 @@ import { createClient } from '@/lib/supabase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
-interface Category {
+interface Parent {
   id: string
   slug: string
   title: string
   description: string | null
   sort_order: number
   is_active: boolean
-  doc_count: number
-  parent_id: string | null
-  parent_title: string | null
+  category_count: number
 }
 
-const parentBadgeColors: Record<string, string> = {
-  'Web App': 'bg-purple-100 text-purple-800',
-  'Mobile App': 'bg-blue-100 text-blue-800',
-  'General': 'bg-gray-100 text-gray-800',
-}
-
-export default function CategoriesPage() {
+export default function ParentsPage() {
   const { selectedProduct } = useAdminProduct()
-  const [categories, setCategories] = useState<Category[]>([])
+  const [parents, setParents] = useState<Parent[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  const fetchCategories = async () => {
+  const fetchParents = async () => {
     const supabase = createClient()
 
-    // Fetch categories filtered by product
-    let catQuery = supabase
-      .from('doc_categories')
-      .select('*')
-      .order('sort_order')
-
-    if (selectedProduct && selectedProduct !== 'hub') {
-      catQuery = catQuery.eq('product_id', selectedProduct)
-    }
-
-    const { data: cats, error: catError } = await catQuery
-
-    if (catError) {
-      console.error('Error fetching categories:', catError)
-      setLoading(false)
-      return
-    }
-
-    // Fetch parents for lookup (with sort_order for grouping)
+    // Fetch parents filtered by product
     let parentQuery = supabase
       .from('doc_parents')
-      .select('id, title, sort_order')
+      .select('*')
       .order('sort_order')
 
     if (selectedProduct && selectedProduct !== 'hub') {
       parentQuery = parentQuery.eq('product_id', selectedProduct)
     }
 
-    const { data: parentsData } = await parentQuery
-    const parentMap: Record<string, { title: string; sort_order: number }> = {}
-    ;(parentsData || []).forEach((p) => {
-      parentMap[p.id] = { title: p.title, sort_order: p.sort_order }
-    })
+    const { data: parentData, error: parentError } = await parentQuery
 
-    // Get doc counts filtered by product
-    let docQuery = supabase
-      .from('support_docs')
-      .select('category_id')
-
-    if (selectedProduct && selectedProduct !== 'hub') {
-      docQuery = docQuery.eq('product_id', selectedProduct)
+    if (parentError) {
+      console.error('Error fetching parents:', parentError)
+      setLoading(false)
+      return
     }
 
-    const { data: docs } = await docQuery
+    // Get category counts per parent filtered by product
+    let catQuery = supabase
+      .from('doc_categories')
+      .select('parent_id')
 
-    const docCounts = (docs || []).reduce((acc, doc) => {
-      if (doc.category_id) {
-        acc[doc.category_id] = (acc[doc.category_id] || 0) + 1
+    if (selectedProduct && selectedProduct !== 'hub') {
+      catQuery = catQuery.eq('product_id', selectedProduct)
+    }
+
+    const { data: cats } = await catQuery
+
+    const categoryCounts = (cats || []).reduce((acc, cat) => {
+      if (cat.parent_id) {
+        acc[cat.parent_id] = (acc[cat.parent_id] || 0) + 1
       }
       return acc
     }, {} as Record<string, number>)
 
-    const mapped = (cats || []).map((cat) => ({
-      ...cat,
-      doc_count: docCounts[cat.id] || 0,
-      parent_id: cat.parent_id || null,
-      parent_title: cat.parent_id ? (parentMap[cat.parent_id]?.title || null) : null,
-    }))
-
-    // Sort by parent sort_order first, then category sort_order within each parent
-    mapped.sort((a, b) => {
-      const aParentSort = a.parent_id ? (parentMap[a.parent_id]?.sort_order ?? 999) : 999
-      const bParentSort = b.parent_id ? (parentMap[b.parent_id]?.sort_order ?? 999) : 999
-      return aParentSort - bParentSort || a.sort_order - b.sort_order
-    })
-
-    setCategories(mapped)
+    setParents(
+      (parentData || []).map((parent) => ({
+        ...parent,
+        category_count: categoryCounts[parent.id] || 0,
+      }))
+    )
     setLoading(false)
   }
 
   useEffect(() => {
     setLoading(true)
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial data fetch on mount
-    void fetchCategories()
+    void fetchParents()
   }, [selectedProduct])
 
-  async function handleDelete(id: string, docCount: number) {
-    if (docCount > 0) {
-      alert('Cannot delete a category that has documents. Please move or delete the documents first.')
+  async function handleDelete(id: string, categoryCount: number) {
+    if (categoryCount > 0) {
+      alert('Cannot delete a parent that has categories. Please move or delete the categories first.')
       return
     }
 
-    if (!confirm('Are you sure you want to delete this category?')) return
+    if (!confirm('Are you sure you want to delete this parent?')) return
 
     setDeleting(id)
     const supabase = createClient()
 
     const { error } = await supabase
-      .from('doc_categories')
+      .from('doc_parents')
       .delete()
       .eq('id', id)
 
     if (error) {
-      alert('Error deleting category: ' + error.message)
+      alert('Error deleting parent: ' + error.message)
     } else {
-      setCategories((prev) => prev.filter((c) => c.id !== id))
+      setParents((prev) => prev.filter((p) => p.id !== id))
       // Revalidate support pages to update navigation
       await revalidateSupportPages({ type: 'category' })
     }
@@ -137,31 +104,31 @@ export default function CategoriesPage() {
   }
 
   async function handleReorder(draggedId: string, targetId: string) {
-    const draggedIndex = categories.findIndex((c) => c.id === draggedId)
-    const targetIndex = categories.findIndex((c) => c.id === targetId)
+    const draggedIndex = parents.findIndex((p) => p.id === draggedId)
+    const targetIndex = parents.findIndex((p) => p.id === targetId)
 
     if (draggedIndex === targetIndex) return
 
-    const newCategories = [...categories]
-    const [removed] = newCategories.splice(draggedIndex, 1)
-    newCategories.splice(targetIndex, 0, removed)
+    const newParents = [...parents]
+    const [removed] = newParents.splice(draggedIndex, 1)
+    newParents.splice(targetIndex, 0, removed)
 
-    // Update sort_order for all categories
-    const updated = newCategories.map((cat, index) => ({
-      ...cat,
+    // Update sort_order for all parents
+    const updated = newParents.map((parent, index) => ({
+      ...parent,
       sort_order: index + 1,
     }))
 
-    setCategories(updated)
+    setParents(updated)
 
     // Save to database
     const supabase = createClient()
     await Promise.all(
-      updated.map((cat) =>
+      updated.map((parent) =>
         supabase
-          .from('doc_categories')
-          .update({ sort_order: cat.sort_order })
-          .eq('id', cat.id)
+          .from('doc_parents')
+          .update({ sort_order: parent.sort_order })
+          .eq('id', parent.id)
       )
     )
 
@@ -181,35 +148,35 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Parents</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage documentation categories
+            Manage platform parent sections for documentation
           </p>
         </div>
         <Link
-          href="/admin/docs/categories/new"
+          href="/admin/docs/parents/new"
           className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          New Category
+          New Parent
         </Link>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {categories.length === 0 ? (
+        {parents.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No categories</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No parents</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Get started by creating a new category.
+              Get started by creating a new parent section.
             </p>
             <div className="mt-6">
               <Link
-                href="/admin/docs/categories/new"
+                href="/admin/docs/parents/new"
                 className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
               >
                 <Plus className="h-4 w-4" />
-                New Category
+                New Parent
               </Link>
             </div>
           </div>
@@ -219,16 +186,13 @@ export default function CategoriesPage() {
               <tr>
                 <th className="w-10 px-3 py-3"></th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Parent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Slug
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Docs
+                  Categories
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -239,16 +203,16 @@ export default function CategoriesPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {categories.map((category) => (
+              {parents.map((parent) => (
                 <tr
-                  key={category.id}
+                  key={parent.id}
                   draggable
-                  onDragStart={(e) => e.dataTransfer.setData('text/plain', category.id)}
+                  onDragStart={(e) => e.dataTransfer.setData('text/plain', parent.id)}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault()
                     const draggedId = e.dataTransfer.getData('text/plain')
-                    handleReorder(draggedId, category.id)
+                    handleReorder(draggedId, parent.id)
                   }}
                   className="hover:bg-gray-50 cursor-move"
                 >
@@ -258,54 +222,43 @@ export default function CategoriesPage() {
                   <td className="px-6 py-4">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {category.title}
+                        {parent.title}
                       </div>
-                      {category.description && (
+                      {parent.description && (
                         <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {category.description}
+                          {parent.description}
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    {category.parent_title && (
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          parentBadgeColors[category.parent_title] || 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {category.parent_title}
-                      </span>
-                    )}
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {parent.slug}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {category.slug}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {category.doc_count} doc{category.doc_count !== 1 ? 's' : ''}
+                    {parent.category_count} categor{parent.category_count !== 1 ? 'ies' : 'y'}
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        category.is_active
+                        parent.is_active
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {category.is_active ? 'Active' : 'Inactive'}
+                      {parent.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        href={`/admin/docs/categories/${category.id}`}
+                        href={`/admin/docs/parents/${parent.id}`}
                         className="text-purple-600 hover:text-purple-900 p-1"
                       >
                         <Edit2 className="h-4 w-4" />
                       </Link>
                       <button
-                        onClick={() => handleDelete(category.id, category.doc_count)}
-                        disabled={deleting === category.id}
+                        onClick={() => handleDelete(parent.id, parent.category_count)}
+                        disabled={deleting === parent.id}
                         className="text-red-600 hover:text-red-900 p-1 disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />

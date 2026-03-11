@@ -7,66 +7,49 @@ import { ArrowLeft, Save } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 
-export default function EditCategoryPage() {
+export default function EditParentPage() {
   const router = useRouter()
   const params = useParams()
-  const categoryId = params.id as string
+  const parentId = params.id as string
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [parents, setParents] = useState<{id: string, title: string}[]>([])
 
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     description: '',
     is_active: true,
-    parent_id: '',
   })
 
   useEffect(() => {
-    async function fetchCategory() {
+    async function fetchParent() {
       try {
         const supabase = createClient()
         const { data, error: fetchError } = await supabase
-          .from('doc_categories')
+          .from('doc_parents')
           .select('*')
-          .eq('id', categoryId)
+          .eq('id', parentId)
           .single()
 
         if (fetchError) throw fetchError
-
-        // Fetch parents filtered by the category's product
-        let parentQuery = supabase
-          .from('doc_parents')
-          .select('id, title')
-          .eq('is_active', true)
-          .order('sort_order')
-
-        if (data.product_id) {
-          parentQuery = parentQuery.eq('product_id', data.product_id)
-        }
-
-        const { data: parentsData } = await parentQuery
-        if (parentsData) setParents(parentsData)
 
         setFormData({
           title: data.title || '',
           slug: data.slug || '',
           description: data.description || '',
           is_active: data.is_active ?? true,
-          parent_id: data.parent_id || '',
         })
       } catch (e: any) {
-        setError(e.message || 'Failed to fetch category')
+        setError(e.message || 'Failed to fetch parent')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchCategory()
-  }, [categoryId])
+    fetchParent()
+  }, [parentId])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -77,25 +60,24 @@ export default function EditCategoryPage() {
       const supabase = createClient()
 
       const { error: updateError } = await supabase
-        .from('doc_categories')
+        .from('doc_parents')
         .update({
           title: formData.title,
           slug: formData.slug,
           description: formData.description || null,
           is_active: formData.is_active,
-          parent_id: formData.parent_id || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', categoryId)
+        .eq('id', parentId)
 
       if (updateError) throw updateError
 
-      // Revalidate support pages to reflect category changes in navigation
+      // Revalidate support pages to reflect parent changes in navigation
       await revalidateSupportPages({ type: 'category' })
 
-      router.push('/admin/docs/categories')
+      router.push('/admin/docs/parents')
     } catch (e: any) {
-      setError(e.message || 'Failed to update category')
+      setError(e.message || 'Failed to update parent')
       setSaving(false)
     }
   }
@@ -112,14 +94,14 @@ export default function EditCategoryPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/docs/categories"
+          href="/admin/docs/parents"
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Category</h1>
-          <p className="text-sm text-gray-500">Update category details</p>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Parent</h1>
+          <p className="text-sm text-gray-500">Update parent section details</p>
         </div>
       </div>
 
@@ -131,26 +113,6 @@ export default function EditCategoryPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Parent
-            </label>
-            <select
-              value={formData.parent_id}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, parent_id: e.target.value }))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            >
-              <option value="">Select a parent</option>
-              {parents.map((parent) => (
-                <option key={parent.id} value={parent.id}>
-                  {parent.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Title
@@ -170,18 +132,15 @@ export default function EditCategoryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Slug
             </label>
-            <div className="flex items-center">
-              <span className="text-gray-500 text-sm mr-2">/support/</span>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, slug: e.target.value }))
-                }
-                required
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, slug: e.target.value }))
+              }
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
           </div>
 
           <div>
@@ -216,7 +175,7 @@ export default function EditCategoryPage() {
 
         <div className="flex items-center justify-end gap-3">
           <Link
-            href="/admin/docs/categories"
+            href="/admin/docs/parents"
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
             Cancel

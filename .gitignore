@@ -52,5 +52,13 @@ screenshots/
 local-d1.db
 .mcp.json
 
+# Supabase local
+supabase/.temp/
+
 # Git worktrees
 .worktrees/
+
+# Test screenshots (Playwright QA)
+*.png
+!app/**/*.png
+!public/**/*.png

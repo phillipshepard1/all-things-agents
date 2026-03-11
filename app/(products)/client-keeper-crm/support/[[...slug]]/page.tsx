@@ -65,26 +65,28 @@ export default async function Page(props: {
   const videoPosition = doc.video_position || 'bottom'
 
   const VideoEmbed = doc.video_url ? (
-    <div className="my-8 aspect-video">
-      {isUploadedVideo(doc.video_url) ? (
+    isUploadedVideo(doc.video_url) ? (
+      <div className="my-8 flex justify-center">
         <video
           src={doc.video_url}
           controls
           preload="metadata"
           playsInline
-          className="w-full h-full rounded-lg bg-black"
+          className="max-w-full max-h-[80vh] rounded-lg"
         >
           Your browser does not support the video tag.
         </video>
-      ) : embedUrl ? (
+      </div>
+    ) : embedUrl ? (
+      <div className="my-8 aspect-video">
         <iframe
           src={embedUrl}
           className="w-full h-full rounded-lg border-0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
-      ) : null}
-    </div>
+      </div>
+    ) : null
   ) : null
 
   return (
@@ -112,7 +114,8 @@ export async function generateMetadata(props: {
   params: Promise<{ slug?: string[] }>
 }) {
   const params = await props.params
-  const doc = await getDocBySlug(params.slug || [])
+  const slugPath = params.slug || []
+  const doc = await getDocBySlug(slugPath)
 
   if (!doc) {
     return {
@@ -120,8 +123,18 @@ export async function generateMetadata(props: {
     }
   }
 
+  // Build a contextual title including parent and category when available
+  const titleParts = [doc.title]
+  if (doc.category_title && doc.slug !== 'index') {
+    titleParts.push(doc.category_title)
+  }
+  if (doc.parent_title) {
+    titleParts.push(doc.parent_title)
+  }
+  titleParts.push('Client Keeper Support')
+
   return {
-    title: doc.title,
+    title: titleParts.join(' | '),
     description: doc.description,
   }
 }

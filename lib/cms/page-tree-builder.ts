@@ -1,34 +1,46 @@
-import type { Root, Node, Folder, Item } from 'fumadocs-core/page-tree'
-import type { DocCategory } from './support-docs'
+import type { Root, Node, Folder } from 'fumadocs-core/page-tree'
+import type { DocParent } from './support-docs'
 
 /**
- * Build a Fumadocs PageTree from Supabase categories and docs
+ * Build a Fumadocs PageTree from Supabase parents → categories → docs
+ * 3-level hierarchy: Root → Parent Folders → Category Folders → Doc Pages
  */
-export function buildPageTree(categories: DocCategory[]): Root {
-  const children: Node[] = categories.map((category) => {
-    // Find if there's an index doc for this category
-    const indexDoc = category.docs.find((d) => d.slug === 'index')
-    const otherDocs = category.docs.filter((d) => d.slug !== 'index')
+export function buildPageTree(parents: DocParent[]): Root {
+  const children: Node[] = parents
+    .map((parent) => {
+      const categoryFolders: Node[] = parent.categories
+        .map((category) => {
+          const indexDoc = category.docs.find((d) => d.slug === 'index')
+          const otherDocs = category.docs.filter((d) => d.slug !== 'index')
 
-    const folder: Folder = {
-      type: 'folder',
-      name: category.title,
-      index: indexDoc
-        ? {
-            type: 'page',
+          const categoryFolder: Folder = {
+            type: 'folder',
             name: category.title,
-            url: `/client-keeper-crm/support/${category.slug}`,
+            index: indexDoc
+              ? {
+                  type: 'page',
+                  name: category.title,
+                  url: `/client-keeper-crm/support/${parent.slug}/${category.slug}`,
+                }
+              : undefined,
+            children: otherDocs.map((doc) => ({
+              type: 'page',
+              name: doc.title,
+              url: `/client-keeper-crm/support/${parent.slug}/${category.slug}/${doc.slug}`,
+            })),
           }
-        : undefined,
-      children: otherDocs.map((doc) => ({
-        type: 'page',
-        name: doc.title,
-        url: `/client-keeper-crm/support/${category.slug}/${doc.slug}`,
-      })),
-    }
 
-    return folder
-  })
+          return categoryFolder
+        })
+
+      const parentFolder: Folder = {
+        type: 'folder',
+        name: parent.title,
+        children: categoryFolders,
+      }
+
+      return parentFolder
+    })
 
   return {
     name: 'Support',
@@ -38,6 +50,7 @@ export function buildPageTree(categories: DocCategory[]): Root {
 
 /**
  * Build a simpler navigation structure for custom rendering
+ * 3-level: Parent → Category → Doc
  */
 export interface NavItem {
   title: string
@@ -45,18 +58,23 @@ export interface NavItem {
   items?: NavItem[]
 }
 
-export function buildNavigation(categories: DocCategory[]): NavItem[] {
-  return categories.map((category) => {
-    const indexDoc = category.docs.find((d) => d.slug === 'index')
-    const otherDocs = category.docs.filter((d) => d.slug !== 'index')
+export function buildNavigation(parents: DocParent[]): NavItem[] {
+  return parents
+    .map((parent) => ({
+      title: parent.title,
+      href: `/client-keeper-crm/support/${parent.slug}`,
+      items: parent.categories
+        .map((category) => {
+          const otherDocs = category.docs.filter((d) => d.slug !== 'index')
 
-    return {
-      title: category.title,
-      href: `/client-keeper-crm/support/${category.slug}`,
-      items: otherDocs.map((doc) => ({
-        title: doc.title,
-        href: `/client-keeper-crm/support/${category.slug}/${doc.slug}`,
-      })),
-    }
-  })
+          return {
+            title: category.title,
+            href: `/client-keeper-crm/support/${parent.slug}/${category.slug}`,
+            items: otherDocs.map((doc) => ({
+              title: doc.title,
+              href: `/client-keeper-crm/support/${parent.slug}/${category.slug}/${doc.slug}`,
+            })),
+          }
+        }),
+    }))
 }

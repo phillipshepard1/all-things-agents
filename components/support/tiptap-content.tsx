@@ -9,13 +9,13 @@ interface TiptapContentProps {
   videoEmbed?: ReactNode
 }
 
-const proseClasses = `prose prose-neutral dark:prose-invert max-w-none
+const proseClasses = `prose prose-lg prose-neutral dark:prose-invert max-w-none
   prose-headings:scroll-mt-20
-  prose-h1:text-3xl prose-h1:font-bold
-  prose-h2:text-2xl prose-h2:font-semibold prose-h2:border-b prose-h2:pb-2 prose-h2:mb-4
-  prose-h3:text-xl prose-h3:font-medium
-  prose-p:leading-7
-  prose-li:my-1
+  prose-h1:text-4xl prose-h1:font-extrabold
+  prose-h2:text-3xl prose-h2:font-bold prose-h2:border-b prose-h2:pb-2 prose-h2:mb-4
+  prose-h3:text-2xl prose-h3:font-semibold
+  prose-p:text-lg prose-p:leading-8
+  prose-li:my-1 prose-li:text-lg
   prose-a:text-purple-600 dark:prose-a:text-purple-400 prose-a:no-underline hover:prose-a:underline
   prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
   prose-pre:bg-gray-900 prose-pre:text-gray-100`

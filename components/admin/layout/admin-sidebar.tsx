@@ -20,6 +20,7 @@ const navigation = [
     icon: FileText,
     children: [
       { name: 'All Docs', href: '/admin/docs' },
+      { name: 'Parents', href: '/admin/docs/parents' },
       { name: 'Categories', href: '/admin/docs/categories' },
       { name: 'Media Library', href: '/admin/docs/media' },
     ]

@@ -159,7 +159,7 @@ export default function RootLayout({
         className={`${outfit.variable} ${dmSans.variable} ${plusJakarta.variable} ${playfair.variable} ${inter.variable} ${poppins.variable} ${nunito.variable} ${manrope.variable} ${cormorantGaramond.variable} ${quicksand.variable} ${raleway.variable} ${rubik.variable} ${montserrat.variable} ${lexend.variable} ${urbanist.variable} ${dancingScript.variable} ${caveat.variable} font-sans antialiased`}
       >
         <GoogleAnalytics />
-        <RootProvider theme={{ defaultTheme: "light", forcedTheme: "light" }}>
+        <RootProvider theme={{ defaultTheme: "light" }}>
           {children}
         </RootProvider>
       </body>
