@@ -51,3 +51,6 @@ screenshots/
 .playwright-mcp/
 local-d1.db
 .mcp.json
+
+# Git worktrees
+.worktrees/
