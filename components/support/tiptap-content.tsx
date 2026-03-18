@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 interface TiptapContentProps {
   content: JSONContent
   videoEmbed?: ReactNode
+  muxAspectRatios?: Record<string, string>
 }
 
 const proseClasses = `prose prose-lg prose-neutral dark:prose-invert max-w-none
@@ -48,7 +49,7 @@ const MUX_PLACEHOLDER_REGEX = /(<div[^>]*data-mux-playback-id="([^"]+)"[^>]*><\/
  * TipTap's static renderHTML can't output React components, so we emit placeholder divs
  * with data-mux-playback-id and swap them here at render time.
  */
-function renderHtmlWithMuxPlayers(html: string): ReactNode[] {
+function renderHtmlWithMuxPlayers(html: string, muxAspectRatios?: Record<string, string>): ReactNode[] {
   const parts: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
@@ -68,10 +69,20 @@ function renderHtmlWithMuxPlayers(html: string): ReactNode[] {
       )
     }
 
+    const preFetchedRatio = muxAspectRatios?.[playbackId]
+
     // Mux player in place of the placeholder
     parts.push(
-      <div key={`mux-${playbackId}-${matchStart}`} className="my-6 flex justify-center">
-        <MuxPlayerWithAutoAspect playbackId={playbackId} />
+      <div key={`mux-${playbackId}-${matchStart}`} className="my-6 flex justify-center aspect-video">
+        {preFetchedRatio ? (
+          <MuxVideoPlayer
+            playbackId={playbackId}
+            aspectRatio={preFetchedRatio}
+            className="max-w-full max-h-[80vh] rounded-lg"
+          />
+        ) : (
+          <MuxPlayerWithAutoAspect playbackId={playbackId} />
+        )}
       </div>
     )
 
@@ -88,7 +99,7 @@ function renderHtmlWithMuxPlayers(html: string): ReactNode[] {
   return parts
 }
 
-export function TiptapContent({ content, videoEmbed }: TiptapContentProps) {
+export function TiptapContent({ content, videoEmbed, muxAspectRatios }: TiptapContentProps) {
   const html = renderTiptapContent(content)
   const hasMuxPlaceholders = html.includes('data-mux-playback-id')
 
@@ -104,11 +115,11 @@ export function TiptapContent({ content, videoEmbed }: TiptapContentProps) {
         <>
           <style jsx global>{tiptapStyles}</style>
           <div className={proseClasses}>
-            {hasMuxPlaceholders ? renderHtmlWithMuxPlayers(beforeVideo) : (
+            {hasMuxPlaceholders ? renderHtmlWithMuxPlayers(beforeVideo, muxAspectRatios) : (
               <div dangerouslySetInnerHTML={{ __html: beforeVideo }} />
             )}
             {videoEmbed}
-            {hasMuxPlaceholders ? renderHtmlWithMuxPlayers(afterVideo) : (
+            {hasMuxPlaceholders ? renderHtmlWithMuxPlayers(afterVideo, muxAspectRatios) : (
               <div dangerouslySetInnerHTML={{ __html: afterVideo }} />
             )}
           </div>
@@ -123,7 +134,7 @@ export function TiptapContent({ content, videoEmbed }: TiptapContentProps) {
       <>
         <style jsx global>{tiptapStyles}</style>
         <div className={proseClasses}>
-          {renderHtmlWithMuxPlayers(html)}
+          {renderHtmlWithMuxPlayers(html, muxAspectRatios)}
         </div>
       </>
     )

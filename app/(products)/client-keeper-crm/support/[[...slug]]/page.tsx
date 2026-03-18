@@ -24,6 +24,27 @@ export default async function Page(props: {
 
   const toc = generateTocFromContent(doc.content)
 
+  // Pre-fetch aspect ratios for all Mux videos embedded in TipTap content
+  const contentJson = doc.content ? JSON.stringify(doc.content) : ''
+  const muxUrlRegex = /stream\.mux\.com\/([a-zA-Z0-9]+)/g
+  const contentPlaybackIds: string[] = []
+  let idMatch: RegExpExecArray | null
+  while ((idMatch = muxUrlRegex.exec(contentJson)) !== null) {
+    if (!contentPlaybackIds.includes(idMatch[1])) {
+      contentPlaybackIds.push(idMatch[1])
+    }
+  }
+  const aspectEntries = await Promise.all(
+    contentPlaybackIds.map(async (id) => {
+      const ratio = await getMuxAspectRatio(id)
+      return [id, ratio] as const
+    })
+  )
+  const muxAspectRatios: Record<string, string> = {}
+  for (const [id, ratio] of aspectEntries) {
+    if (ratio) muxAspectRatios[id] = ratio
+  }
+
   const videoPosition = doc.video_position || 'bottom'
 
   let VideoEmbed: React.ReactNode = null
@@ -78,6 +99,7 @@ export default async function Page(props: {
         <TiptapContent
           content={doc.content}
           videoEmbed={videoPosition === 'middle' ? VideoEmbed : undefined}
+          muxAspectRatios={muxAspectRatios}
         />
         {videoPosition === 'bottom' && VideoEmbed}
       </DocsBody>
