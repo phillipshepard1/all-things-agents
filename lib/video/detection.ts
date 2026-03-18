@@ -3,12 +3,11 @@
  * Replaces duplicated functions across page.tsx, video.ts, and video-upload.tsx.
  */
 
-export type VideoType = 'mux' | 'supabase' | 'youtube' | 'vimeo' | 'loom' | 'unknown'
+export type VideoType = 'mux' | 'youtube' | 'vimeo' | 'loom' | 'unknown'
 
 export function getVideoType(url: string): VideoType {
   if (!url) return 'unknown'
   if (isMuxVideo(url)) return 'mux'
-  if (isSupabaseVideo(url)) return 'supabase'
   if (/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)/.test(url)) return 'youtube'
   if (/vimeo\.com\//.test(url)) return 'vimeo'
   if (/loom\.com\//.test(url)) return 'loom'
@@ -19,13 +18,9 @@ export function isMuxVideo(url: string): boolean {
   return url.includes('stream.mux.com')
 }
 
-export function isSupabaseVideo(url: string): boolean {
-  return url.includes('supabase.co/storage')
-}
-
 /** Returns true for videos that should be played directly (not embedded via iframe) */
 export function isDirectVideo(url: string): boolean {
-  return isMuxVideo(url) || isSupabaseVideo(url) || /\.(mp4|webm|mov)$/i.test(url)
+  return isMuxVideo(url) || /\.(mp4|webm|mov)$/i.test(url)
 }
 
 /** Extract the Mux playback ID from a stream URL like https://stream.mux.com/{ID} */

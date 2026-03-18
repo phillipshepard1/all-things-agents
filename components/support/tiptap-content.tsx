@@ -224,18 +224,6 @@ const tiptapStyles = `
     border-radius: 0.5rem;
   }
 
-  /* Native video styles */
-  .video-embed video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 0.5rem;
-    object-fit: contain;
-    background: #000;
-  }
-
   /* Content image styles */
   .content-image {
     max-width: 100%;

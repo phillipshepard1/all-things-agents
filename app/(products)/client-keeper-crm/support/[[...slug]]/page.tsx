@@ -8,7 +8,7 @@ import { notFound } from 'next/navigation'
 import { getDocBySlug, getAllDocSlugs } from '@/lib/cms/support-docs'
 import { generateTocFromContent } from '@/lib/cms/toc-generator'
 import { TiptapContent } from '@/components/support/tiptap-content'
-import { isMuxVideo, isSupabaseVideo, getMuxPlaybackId, getEmbedUrl } from '@/lib/video/detection'
+import { isMuxVideo, getMuxPlaybackId, getEmbedUrl } from '@/lib/video/detection'
 import { MuxVideoPlayer } from '@/components/video/mux-player'
 import { getMuxAspectRatio } from '@/lib/mux/aspect-ratio'
 
@@ -61,20 +61,6 @@ export default async function Page(props: {
           />
         </div>
       ) : null
-    } else if (isSupabaseVideo(doc.video_url)) {
-      VideoEmbed = (
-        <div className="my-8 flex justify-center">
-          <video
-            src={doc.video_url}
-            controls
-            preload="metadata"
-            playsInline
-            className="max-w-full max-h-[80vh] rounded-lg"
-          >
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      )
     } else {
       const embed = getEmbedUrl(doc.video_url)
       VideoEmbed = embed ? (

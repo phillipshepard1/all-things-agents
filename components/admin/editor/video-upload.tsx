@@ -2,12 +2,13 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { Link2, Upload, X, Video, Loader2, FolderOpen } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { MediaPickerModal } from '../media/media-picker-modal'
+import { isDirectVideo, isMuxVideo, getMuxPlaybackId, getEmbedUrl as getEmbedUrlFromDetection } from '@/lib/video/detection'
+import { MuxVideoPlayer } from '@/components/video/mux-player'
 
-// Validation constants for direct Supabase upload
 const MAX_FILE_SIZE = 200 * 1024 * 1024 // 200MB for admin uploads
 const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
+const MUX_POLL_INTERVAL = 3000
 
 interface VideoUploadProps {
   value?: string | null
@@ -16,22 +17,15 @@ interface VideoUploadProps {
 
 type InputMode = 'url' | 'upload' | 'library'
 
-/**
- * Detect if a URL is an uploaded video vs an embeddable URL
- */
-function isUploadedVideo(url: string): boolean {
-  return url.includes('supabase.co/storage') || /\.(mp4|webm|mov)$/i.test(url)
-}
-
 export function VideoUpload({ value, onChange }: VideoUploadProps) {
   // Detect initial mode based on existing value
   const getInitialMode = (): InputMode => {
     if (!value) return 'url'
-    return isUploadedVideo(value) ? 'upload' : 'url'
+    return isDirectVideo(value) ? 'upload' : 'url'
   }
 
   const [mode, setMode] = useState<InputMode>(getInitialMode)
-  const [urlInput, setUrlInput] = useState(value && !isUploadedVideo(value) ? value : '')
+  const [urlInput, setUrlInput] = useState(value && !isDirectVideo(value) ? value : '')
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -61,13 +55,11 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
   const handleUpload = useCallback(async (file: File) => {
     setError(null)
 
-    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       setError('Please upload a video file (MP4, WebM, or MOV)')
       return
     }
 
-    // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       setError(`File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`)
       return
@@ -77,40 +69,46 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
     setUploadProgress(0)
 
     try {
-      const supabase = createClient()
+      // 1. Get a Mux direct upload URL
+      setUploadProgress(5)
+      const createRes = await fetch('/api/upload-video-mux', { method: 'POST' })
+      if (!createRes.ok) throw new Error('Failed to create upload')
+      const { uploadUrl, uploadId } = await createRes.json()
 
-      // Generate unique filename
-      const ext = file.name.split('.').pop() || 'mp4'
-      const timestamp = Date.now()
-      const randomId = Math.random().toString(36).substring(2, 8)
-      const fileName = `videos/${timestamp}-${randomId}.${ext}`
+      // 2. Upload file directly to Mux
+      setUploadProgress(10)
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      })
+      if (!uploadRes.ok) throw new Error('Failed to upload to Mux')
+      setUploadProgress(60)
 
-      // Simulate progress since Supabase SDK doesn't provide upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90))
-      }, 500)
+      // 3. Poll for asset readiness
+      let attempts = 0
+      const maxAttempts = 60 // ~3 minutes
+      while (attempts < maxAttempts) {
+        const statusRes = await fetch(`/api/upload-video-mux/status?uploadId=${uploadId}`)
+        if (!statusRes.ok) throw new Error('Failed to check upload status')
+        const statusData = await statusRes.json()
 
-      // Upload directly to Supabase Storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('support-docs-media')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
+        if (statusData.status === 'ready') {
+          setUploadProgress(100)
+          onChange(statusData.streamUrl)
+          return
+        }
 
-      clearInterval(progressInterval)
+        if (statusData.status === 'errored') {
+          throw new Error('Video processing failed')
+        }
 
-      if (uploadError) {
-        throw new Error(uploadError.message)
+        setUploadProgress(60 + Math.min(attempts, 35))
+        attempts++
+        await new Promise((r) => setTimeout(r, MUX_POLL_INTERVAL))
       }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('support-docs-media')
-        .getPublicUrl(data.path)
-
-      setUploadProgress(100)
-      onChange(publicUrl)
+      throw new Error('Upload timed out — video may still be processing')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -167,8 +165,8 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
 
   // Show preview if we have a value
   if (value) {
-    const embedUrl = isUploadedVideo(value) ? null : getEmbedUrl(value)
-    const isEmbeddable = isUploadedVideo(value) || embedUrl !== null
+    const muxPlaybackId = isMuxVideo(value) ? getMuxPlaybackId(value) : null
+    const embedResult = !isDirectVideo(value) ? getEmbedUrlFromDetection(value) : null
 
     return (
       <div className="space-y-2">
@@ -176,18 +174,15 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
           Video (optional)
         </label>
         <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-black">
-          <div className="aspect-video relative">
-            {isUploadedVideo(value) ? (
-              <video
-                src={value}
-                controls
-                preload="metadata"
-                playsInline
-                className="w-full h-full"
+          <div className="relative flex justify-center bg-black">
+            {muxPlaybackId ? (
+              <MuxVideoPlayer
+                playbackId={muxPlaybackId}
+                className="max-w-full max-h-[50vh]"
               />
-            ) : isEmbeddable ? (
+            ) : embedResult ? (
               <iframe
-                src={embedUrl!}
+                src={embedResult.embedUrl}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -387,33 +382,3 @@ export function VideoUpload({ value, onChange }: VideoUploadProps) {
   )
 }
 
-/**
- * Convert video URLs to embeddable format (for preview)
- * Returns null if the URL is not embeddable
- */
-function getEmbedUrl(url: string): string | null {
-  if (!url) return null
-
-  // YouTube
-  const youtubeMatch = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-  )
-  if (youtubeMatch) {
-    return `https://www.youtube.com/embed/${youtubeMatch[1]}`
-  }
-
-  // Vimeo
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
-  if (vimeoMatch) {
-    return `https://player.vimeo.com/video/${vimeoMatch[1]}`
-  }
-
-  // Loom
-  const loomMatch = url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)
-  if (loomMatch) {
-    return `https://www.loom.com/embed/${loomMatch[1]}`
-  }
-
-  // Return null for unsupported URLs (including Guidde, etc.)
-  return null
-}
