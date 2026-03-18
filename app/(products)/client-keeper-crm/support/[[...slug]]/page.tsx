@@ -8,46 +8,9 @@ import { notFound } from 'next/navigation'
 import { getDocBySlug, getAllDocSlugs } from '@/lib/cms/support-docs'
 import { generateTocFromContent } from '@/lib/cms/toc-generator'
 import { TiptapContent } from '@/components/support/tiptap-content'
-
-/**
- * Detect if a URL is an uploaded video vs an embeddable URL
- */
-function isUploadedVideo(url: string): boolean {
-  return url.includes('supabase.co/storage') || /\.(mp4|webm|mov)$/i.test(url)
-}
-
-/**
- * Convert video URLs to embeddable format
- */
-function getEmbedUrl(url: string): string | null {
-  if (!url) return null
-
-  // YouTube: various formats
-  // https://www.youtube.com/watch?v=VIDEO_ID
-  // https://youtu.be/VIDEO_ID
-  // https://www.youtube.com/embed/VIDEO_ID (already embed)
-  const youtubeMatch = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-  )
-  if (youtubeMatch) {
-    return `https://www.youtube.com/embed/${youtubeMatch[1]}`
-  }
-
-  // Vimeo: https://vimeo.com/VIDEO_ID
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
-  if (vimeoMatch) {
-    return `https://player.vimeo.com/video/${vimeoMatch[1]}`
-  }
-
-  // Loom: https://www.loom.com/share/VIDEO_ID
-  const loomMatch = url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/)
-  if (loomMatch) {
-    return `https://www.loom.com/embed/${loomMatch[1]}`
-  }
-
-  // If it's already an embed URL or unknown format, return as-is
-  return url
-}
+import { isMuxVideo, isSupabaseVideo, getMuxPlaybackId, getEmbedUrl } from '@/lib/video/detection'
+import { MuxVideoPlayer } from '@/components/video/mux-player'
+import { getMuxAspectRatio } from '@/lib/mux/aspect-ratio'
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>
@@ -61,33 +24,50 @@ export default async function Page(props: {
 
   const toc = generateTocFromContent(doc.content)
 
-  const embedUrl = doc.video_url ? getEmbedUrl(doc.video_url) : null
   const videoPosition = doc.video_position || 'bottom'
 
-  const VideoEmbed = doc.video_url ? (
-    isUploadedVideo(doc.video_url) ? (
-      <div className="my-8 flex justify-center">
-        <video
-          src={doc.video_url}
-          controls
-          preload="metadata"
-          playsInline
-          className="max-w-full max-h-[80vh] rounded-lg"
-        >
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    ) : embedUrl ? (
-      <div className="my-8 aspect-video">
-        <iframe
-          src={embedUrl}
-          className="w-full h-full rounded-lg border-0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-    ) : null
-  ) : null
+  let VideoEmbed: React.ReactNode = null
+  if (doc.video_url) {
+    if (isMuxVideo(doc.video_url)) {
+      const playbackId = getMuxPlaybackId(doc.video_url)
+      const aspectRatio = playbackId ? await getMuxAspectRatio(playbackId) : null
+      VideoEmbed = playbackId ? (
+        <div className="my-8 flex justify-center">
+          <MuxVideoPlayer
+            playbackId={playbackId}
+            aspectRatio={aspectRatio ?? undefined}
+            className="max-w-full max-h-[80vh] rounded-lg"
+          />
+        </div>
+      ) : null
+    } else if (isSupabaseVideo(doc.video_url)) {
+      VideoEmbed = (
+        <div className="my-8 flex justify-center">
+          <video
+            src={doc.video_url}
+            controls
+            preload="metadata"
+            playsInline
+            className="max-w-full max-h-[80vh] rounded-lg"
+          >
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )
+    } else {
+      const embed = getEmbedUrl(doc.video_url)
+      VideoEmbed = embed ? (
+        <div className="my-8 aspect-video">
+          <iframe
+            src={embed.embedUrl}
+            className="w-full h-full rounded-lg border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      ) : null
+    }
+  }
 
   return (
     <DocsPage toc={toc}>

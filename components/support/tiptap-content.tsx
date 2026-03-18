@@ -1,6 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { renderTiptapContent } from '@/lib/cms/tiptap-renderer'
+import { MuxVideoPlayer } from '@/components/video/mux-player'
 import type { JSONContent } from '@tiptap/core'
 import type { ReactNode } from 'react'
 
@@ -20,29 +22,111 @@ const proseClasses = `prose prose-lg prose-neutral dark:prose-invert max-w-none
   prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
   prose-pre:bg-gray-900 prose-pre:text-gray-100`
 
+function MuxPlayerWithAutoAspect({ playbackId }: { playbackId: string }) {
+  const [aspectRatio, setAspectRatio] = useState<string | undefined>()
+
+  useEffect(() => {
+    fetch(`/api/media/mux-aspect?playbackId=${playbackId}`)
+      .then(r => r.json())
+      .then(data => { if (data.aspectRatio) setAspectRatio(data.aspectRatio) })
+      .catch(() => {})
+  }, [playbackId])
+
+  return (
+    <MuxVideoPlayer
+      playbackId={playbackId}
+      aspectRatio={aspectRatio}
+      className="max-w-full max-h-[80vh] rounded-lg"
+    />
+  )
+}
+
+const MUX_PLACEHOLDER_REGEX = /(<div[^>]*data-mux-playback-id="([^"]+)"[^>]*><\/div>)/g
+
+/**
+ * Split HTML at Mux placeholder divs and interleave with MuxVideoPlayer React components.
+ * TipTap's static renderHTML can't output React components, so we emit placeholder divs
+ * with data-mux-playback-id and swap them here at render time.
+ */
+function renderHtmlWithMuxPlayers(html: string): ReactNode[] {
+  const parts: ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  // Reset regex state
+  MUX_PLACEHOLDER_REGEX.lastIndex = 0
+
+  while ((match = MUX_PLACEHOLDER_REGEX.exec(html)) !== null) {
+    const playbackId = match[2]
+    const matchStart = match.index
+    const matchEnd = matchStart + match[0].length
+
+    // HTML segment before this placeholder
+    if (matchStart > lastIndex) {
+      parts.push(
+        <div key={`html-${lastIndex}`} dangerouslySetInnerHTML={{ __html: html.slice(lastIndex, matchStart) }} />
+      )
+    }
+
+    // Mux player in place of the placeholder
+    parts.push(
+      <div key={`mux-${playbackId}-${matchStart}`} className="my-6 flex justify-center">
+        <MuxPlayerWithAutoAspect playbackId={playbackId} />
+      </div>
+    )
+
+    lastIndex = matchEnd
+  }
+
+  // Remaining HTML after last placeholder (or all HTML if no placeholders)
+  if (lastIndex < html.length) {
+    parts.push(
+      <div key={`html-${lastIndex}`} dangerouslySetInnerHTML={{ __html: html.slice(lastIndex) }} />
+    )
+  }
+
+  return parts
+}
+
 export function TiptapContent({ content, videoEmbed }: TiptapContentProps) {
   const html = renderTiptapContent(content)
+  const hasMuxPlaceholders = html.includes('data-mux-playback-id')
 
   // For middle position, split content after first h2 or after first few elements
   if (videoEmbed) {
-    // Find the first </h2> or after 2nd paragraph to insert video
     const splitPoint = html.search(/<\/h2>/)
 
     if (splitPoint !== -1) {
-      const beforeVideo = html.slice(0, splitPoint + 5) // Include </h2>
+      const beforeVideo = html.slice(0, splitPoint + 5)
       const afterVideo = html.slice(splitPoint + 5)
 
       return (
         <>
           <style jsx global>{tiptapStyles}</style>
           <div className={proseClasses}>
-            <div dangerouslySetInnerHTML={{ __html: beforeVideo }} />
+            {hasMuxPlaceholders ? renderHtmlWithMuxPlayers(beforeVideo) : (
+              <div dangerouslySetInnerHTML={{ __html: beforeVideo }} />
+            )}
             {videoEmbed}
-            <div dangerouslySetInnerHTML={{ __html: afterVideo }} />
+            {hasMuxPlaceholders ? renderHtmlWithMuxPlayers(afterVideo) : (
+              <div dangerouslySetInnerHTML={{ __html: afterVideo }} />
+            )}
           </div>
         </>
       )
     }
+  }
+
+  // If Mux placeholders exist, use the split renderer; otherwise use dangerouslySetInnerHTML
+  if (hasMuxPlaceholders) {
+    return (
+      <>
+        <style jsx global>{tiptapStyles}</style>
+        <div className={proseClasses}>
+          {renderHtmlWithMuxPlayers(html)}
+        </div>
+      </>
+    )
   }
 
   return (
