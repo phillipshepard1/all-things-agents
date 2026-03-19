@@ -12,6 +12,7 @@ import { CustomImage, uploadImage, Callout, Video, getEmbedUrl, isDirectVideoUrl
 import { EditorHelp } from './editor-help'
 import { GuideImportModal } from './guide-import-modal'
 import { MediaSourceModal } from './media-source-modal'
+import { VideoUploadModal } from './video-upload-modal'
 import { MediaPickerModal } from '../media/media-picker-modal'
 import type { GuideImportResult } from '@/lib/editor/guide-markdown-parser'
 import {
@@ -64,7 +65,7 @@ const blockItems = [
     id: 'video',
     label: 'Video',
     icon: VideoIcon,
-    description: 'YouTube, Vimeo, Loom',
+    description: 'Upload or embed video',
   },
   {
     id: 'info',
@@ -139,6 +140,7 @@ export function NovelEditor({ initialContent, onChange, onGuideImport }: NovelEd
   const [mediaSourceType, setMediaSourceType] = useState<'image' | 'video'>('image')
   const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [mediaPickerType, setMediaPickerType] = useState<'image' | 'video'>('image')
+  const [showVideoUpload, setShowVideoUpload] = useState(false)
 
   const handleImageUpload = async (file: File) => {
     if (!editorRef.current) return
@@ -164,10 +166,8 @@ export function NovelEditor({ initialContent, onChange, onGuideImport }: NovelEd
       if (isDirectVideoUrl(url)) {
         ;(editor.chain().focus() as any).setDirectVideo({ src: url }).run()
       } else {
-        const result = getEmbedUrl(url)
-        if (result) {
-          ;(editor.chain().focus() as any).setVideo({ src: url }).run()
-        }
+        // Embed for YouTube/Vimeo/Loom, fallback to direct video for other URLs
+        ;(editor.chain().focus() as any).setVideo({ src: url }).run()
       }
     }
   }
@@ -312,19 +312,7 @@ export function NovelEditor({ initialContent, onChange, onGuideImport }: NovelEd
           if (mediaSourceType === 'image') {
             fileInputRef.current?.click()
           } else {
-            const url = prompt('Enter video URL (YouTube, Vimeo, or Loom):')
-            if (url && editorRef.current) {
-              if (isDirectVideoUrl(url)) {
-                ;(editorRef.current.chain().focus() as any).setDirectVideo({ src: url }).run()
-              } else {
-                const result = getEmbedUrl(url)
-                if (result) {
-                  ;(editorRef.current.chain().focus() as any).setVideo({ src: url }).run()
-                } else {
-                  alert('Invalid video URL. Please use YouTube, Vimeo, or Loom.')
-                }
-              }
-            }
+            setShowVideoUpload(true)
           }
         }}
         onLibrary={() => {
@@ -345,6 +333,16 @@ export function NovelEditor({ initialContent, onChange, onGuideImport }: NovelEd
         bucket="support-docs-media"
         folder={mediaPickerType === 'image' ? 'uploads' : 'videos'}
         title={`Select ${mediaPickerType === 'image' ? 'Image' : 'Video'} from Library`}
+      />
+
+      {/* Video Upload Modal - URL paste, file upload, or media library */}
+      <VideoUploadModal
+        isOpen={showVideoUpload}
+        onClose={() => setShowVideoUpload(false)}
+        onSelect={(url) => {
+          handleMediaFromLibrary(url, 'video')
+          setShowVideoUpload(false)
+        }}
       />
     </div>
   )
