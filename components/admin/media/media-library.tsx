@@ -7,7 +7,7 @@ import { MediaFilters } from './media-filters'
 import { MediaGrid } from './media-grid'
 import { MediaList } from './media-list'
 import { MediaPreviewModal } from './media-preview-modal'
-import { VideoUploadModal } from '../editor/video-upload-modal'
+import { VideoUploadModal } from './video-upload-modal'
 import { PhotoUploadModal } from './photo-upload-modal'
 
 interface MediaLibraryProps extends MediaLibraryConfig {}
@@ -242,8 +242,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
       <VideoUploadModal
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
-        onSelect={async () => {
-          setShowUploadModal(false)
+        onUploaded={async () => {
           setActiveTab('videos')
           try {
             const res = await fetch('/api/media/mux-videos')
