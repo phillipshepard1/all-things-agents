@@ -1,6 +1,6 @@
 'use client'
 
-import { Image, Film, Grid2X2, Grid3X3, LayoutList, ChevronDown } from 'lucide-react'
+import { Image, Film, Grid2X2, Grid3X3, LayoutList, ChevronDown, Upload } from 'lucide-react'
 import { MediaTab, ViewMode } from '@/lib/media/types'
 import { useState, useRef, useEffect } from 'react'
 
@@ -11,6 +11,7 @@ interface MediaFiltersProps {
   onViewModeChange: (mode: ViewMode) => void
   photosCount: number
   videosCount: number
+  onUploadVideo?: () => void
 }
 
 const gridOptions: { value: ViewMode; label: string; icon: React.ReactNode }[] = [
@@ -26,6 +27,7 @@ export function MediaFilters({
   onViewModeChange,
   photosCount,
   videosCount,
+  onUploadVideo,
 }: MediaFiltersProps) {
   const [isGridDropdownOpen, setIsGridDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -93,8 +95,17 @@ export function MediaFilters({
         </button>
       </div>
 
-      {/* View Mode Toggle */}
-      <div className="flex items-center gap-1 pr-4">
+      {/* Actions + View Mode Toggle */}
+      <div className="flex items-center gap-3 pr-4">
+        {activeTab === 'videos' && onUploadVideo && (
+          <button
+            onClick={onUploadVideo}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#7a36dd] hover:bg-[#6b2cc4] rounded-lg transition-colors"
+          >
+            <Upload className="h-4 w-4" />
+            Upload Video
+          </button>
+        )}
         {/* Grid dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button

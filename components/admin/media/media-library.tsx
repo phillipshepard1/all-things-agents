@@ -7,6 +7,7 @@ import { MediaFilters } from './media-filters'
 import { MediaGrid } from './media-grid'
 import { MediaList } from './media-list'
 import { MediaPreviewModal } from './media-preview-modal'
+import { VideoUploadModal } from '../editor/video-upload-modal'
 
 interface MediaLibraryProps extends MediaLibraryConfig {}
 
@@ -21,6 +22,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<MediaFile | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [showUploadModal, setShowUploadModal] = useState(false)
 
   // Fetch both photos and videos once on mount
   useEffect(() => {
@@ -132,6 +134,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
           onViewModeChange={setViewMode}
           photosCount={photosData.length}
           videosCount={videosData.length}
+          onUploadVideo={() => setShowUploadModal(true)}
         />
 
         {/* Content */}
@@ -213,6 +216,37 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
           </div>
         </div>
       )}
+
+      {/* Video Upload Modal */}
+      <VideoUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onSelect={async () => {
+          setShowUploadModal(false)
+          setActiveTab('videos')
+          try {
+            const res = await fetch('/api/media/mux-videos')
+            if (res.ok) {
+              const data = await res.json()
+              setVideosData(
+                (data.videos || []).map((v: any, index: number) => ({
+                  id: v.id,
+                  name: `Video ${index + 1}`,
+                  path: v.id,
+                  publicUrl: v.streamUrl,
+                  type: 'video' as const,
+                  size: 0,
+                  createdAt: v.createdAt || new Date().toISOString(),
+                  thumbnailUrl: v.thumbnailUrl,
+                  duration: v.duration ?? undefined,
+                }))
+              )
+            }
+          } catch {
+            // Video was uploaded successfully, list refresh failed — not critical
+          }
+        }}
+      />
     </div>
   )
 }
