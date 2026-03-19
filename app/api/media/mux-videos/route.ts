@@ -11,6 +11,13 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!process.env.MUX_TOKEN_ID || !process.env.MUX_TOKEN_SECRET) {
+      return NextResponse.json(
+        { error: 'Mux credentials not configured (MUX_TOKEN_ID or MUX_TOKEN_SECRET missing)' },
+        { status: 500 }
+      )
+    }
+
     const mux = createMuxClient()
     const assets = await mux.video.assets.list({ limit: 100 })
 
@@ -32,6 +39,7 @@ export async function GET() {
     return NextResponse.json({ videos })
   } catch (error) {
     console.error('Mux list error:', error)
-    return NextResponse.json({ error: 'Failed to list videos' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Failed to list videos'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
