@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Play, Copy, Trash2, Check, Image as ImageIcon } from 'lucide-react'
 import { MediaFile } from '@/lib/media/types'
-import { formatBytes } from '@/lib/media/utils'
+import { formatBytes, formatDuration } from '@/lib/media/utils'
 
 interface MediaItemProps {
   file: MediaFile
@@ -92,7 +92,9 @@ export function MediaItem({ file, onPreview, onDelete }: MediaItemProps) {
           {file.name}
         </p>
         <p className="text-xs text-gray-500 mt-0.5">
-          {formatBytes(file.size)}
+          {file.type === 'video' && file.duration != null
+            ? formatDuration(file.duration)
+            : formatBytes(file.size)}
         </p>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Image as ImageIcon, Film, Copy, Trash2, Check } from 'lucide-react'
 import { MediaFile } from '@/lib/media/types'
-import { formatBytes, formatDate } from '@/lib/media/utils'
+import { formatBytes, formatDate, formatDuration } from '@/lib/media/utils'
 
 interface MediaListProps {
   files: MediaFile[]
@@ -100,13 +100,19 @@ function MediaListItem({ file, onPreview, onDelete }: MediaListItemProps) {
               {file.name}
             </p>
             <p className="text-xs text-gray-500 capitalize sm:hidden">
-              {formatBytes(file.size)}
+              {file.type === 'video' && file.duration != null
+                ? formatDuration(file.duration)
+                : formatBytes(file.size)}
             </p>
           </div>
         </div>
       </td>
       <td className="px-4 py-3 hidden sm:table-cell">
-        <span className="text-sm text-gray-600">{formatBytes(file.size)}</span>
+        <span className="text-sm text-gray-600">
+          {file.type === 'video' && file.duration != null
+            ? formatDuration(file.duration)
+            : formatBytes(file.size)}
+        </span>
       </td>
       <td className="px-4 py-3 hidden md:table-cell">
         <span className="text-sm text-gray-600">{formatDate(file.createdAt)}</span>

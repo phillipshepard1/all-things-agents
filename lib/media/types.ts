@@ -12,6 +12,8 @@ export interface MediaFile {
   type: MediaType
   size: number
   createdAt: string
+  duration?: number
+  thumbnailUrl?: string
 }
 
 export interface MediaLibraryConfig {

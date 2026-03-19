@@ -13,7 +13,8 @@ interface MediaLibraryProps extends MediaLibraryConfig {}
 export function MediaLibrary({ bucket, folders, title, description }: MediaLibraryProps) {
   const [activeTab, setActiveTab] = useState<MediaTab>('photos')
   const [viewMode, setViewMode] = useState<ViewMode>('grid-3')
-  const [files, setFiles] = useState<MediaFile[]>([])
+  const [photosData, setPhotosData] = useState<MediaFile[]>([])
+  const [videosData, setVideosData] = useState<MediaFile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [previewFile, setPreviewFile] = useState<MediaFile | null>(null)
@@ -21,31 +22,50 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
   const [deleteConfirm, setDeleteConfirm] = useState<MediaFile | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const fetchFiles = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const folder = activeTab === 'photos' ? folders.images : folders.videos
-      const response = await fetch(`/api/media/list?bucket=${bucket}&folder=${folder}`)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch files')
-      }
-
-      const data = await response.json()
-      setFiles(data.files)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      setFiles([])
-    } finally {
-      setLoading(false)
-    }
-  }, [bucket, folders, activeTab])
-
+  // Fetch both photos and videos once on mount
   useEffect(() => {
-    fetchFiles()
-  }, [fetchFiles])
+    const fetchAll = async () => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const [photosRes, videosRes] = await Promise.all([
+          fetch(`/api/media/list?bucket=${bucket}&folder=${folders.images}`),
+          fetch('/api/media/mux-videos'),
+        ])
+
+        if (photosRes.ok) {
+          const data = await photosRes.json()
+          setPhotosData(data.files || [])
+        }
+
+        if (videosRes.ok) {
+          const data = await videosRes.json()
+          setVideosData(
+            (data.videos || []).map((v: any, index: number) => ({
+              id: v.id,
+              name: `Video ${index + 1}`,
+              path: v.id,
+              publicUrl: v.streamUrl,
+              type: 'video' as const,
+              size: 0,
+              createdAt: v.createdAt || new Date().toISOString(),
+              thumbnailUrl: v.thumbnailUrl,
+              duration: v.duration ?? undefined,
+            }))
+          )
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAll()
+  }, [bucket, folders])
+
+  const files = activeTab === 'photos' ? photosData : videosData
 
   const handlePreview = (file: MediaFile) => {
     setPreviewFile(file)
@@ -61,18 +81,24 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
 
     setDeleting(true)
     try {
-      const response = await fetch('/api/media/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bucket, path: deleteConfirm.path }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete file')
+      if (deleteConfirm.type === 'video') {
+        const response = await fetch('/api/media/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ muxAssetId: deleteConfirm.path }),
+        })
+        if (!response.ok) throw new Error('Failed to delete video')
+        setVideosData((prev) => prev.filter((f) => f.id !== deleteConfirm.id))
+      } else {
+        const response = await fetch('/api/media/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bucket, path: deleteConfirm.path }),
+        })
+        if (!response.ok) throw new Error('Failed to delete file')
+        setPhotosData((prev) => prev.filter((f) => f.id !== deleteConfirm.id))
       }
 
-      // Remove from local state
-      setFiles((prev) => prev.filter((f) => f.id !== deleteConfirm.id))
       setDeleteConfirm(null)
       setIsPreviewOpen(false)
     } catch (err) {
@@ -81,35 +107,6 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
       setDeleting(false)
     }
   }
-
-  // Get counts for tabs
-  const [photosCount, setPhotosCount] = useState(0)
-  const [videosCount, setVideosCount] = useState(0)
-
-  useEffect(() => {
-    // Fetch counts for both tabs
-    const fetchCounts = async () => {
-      try {
-        const [photosRes, videosRes] = await Promise.all([
-          fetch(`/api/media/list?bucket=${bucket}&folder=${folders.images}`),
-          fetch(`/api/media/list?bucket=${bucket}&folder=${folders.videos}`),
-        ])
-
-        if (photosRes.ok) {
-          const data = await photosRes.json()
-          setPhotosCount(data.files.length)
-        }
-        if (videosRes.ok) {
-          const data = await videosRes.json()
-          setVideosCount(data.files.length)
-        }
-      } catch (err) {
-        // Silently fail for counts
-      }
-    }
-
-    fetchCounts()
-  }, [bucket, folders, files.length])
 
   return (
     <div className="space-y-6">
@@ -126,8 +123,8 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
           onTabChange={setActiveTab}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          photosCount={photosCount}
-          videosCount={videosCount}
+          photosCount={photosData.length}
+          videosCount={videosData.length}
         />
 
         {/* Content */}
@@ -140,12 +137,6 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
               <p className="text-gray-600">{error}</p>
-              <button
-                onClick={fetchFiles}
-                className="mt-4 px-4 py-2 text-sm font-medium text-[#7a36dd] hover:bg-purple-50 rounded-lg transition-colors"
-              >
-                Try again
-              </button>
             </div>
           ) : files.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
