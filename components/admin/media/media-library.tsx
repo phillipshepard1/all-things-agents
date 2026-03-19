@@ -37,6 +37,9 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
         if (photosRes.ok) {
           const data = await photosRes.json()
           setPhotosData(data.files || [])
+        } else {
+          const err = await photosRes.json().catch(() => ({}))
+          console.error('Photos API error:', photosRes.status, err)
         }
 
         if (videosRes.ok) {
@@ -54,6 +57,10 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
               duration: v.duration ?? undefined,
             }))
           )
+        } else {
+          const err = await videosRes.json().catch(() => ({}))
+          console.error('Videos API error:', videosRes.status, err)
+          setError(`Failed to load videos: ${err.error || videosRes.statusText}`)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
