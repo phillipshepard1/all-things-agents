@@ -50,7 +50,11 @@ export function VideoUploadModal({ isOpen, onClose, onUploaded }: VideoUploadMod
 
     try {
       setUploadProgress(5)
-      const createRes = await fetch('/api/upload-video-mux', { method: 'POST' })
+      const createRes = await fetch('/api/upload-video-mux', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name.replace(/\.[^.]+$/, '') }),
+      })
       if (!createRes.ok) throw new Error('Failed to create upload')
       const { uploadUrl, uploadId } = await createRes.json()
 

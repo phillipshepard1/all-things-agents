@@ -51,7 +51,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
           setVideosData(
             (data.videos || []).map((v: any, index: number) => ({
               id: v.id,
-              name: `Video ${index + 1}`,
+              name: v.name || `Video ${index + 1}`,
               path: v.id,
               publicUrl: v.streamUrl,
               type: 'video' as const,
@@ -251,7 +251,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
               setVideosData(
                 (data.videos || []).map((v: any, index: number) => ({
                   id: v.id,
-                  name: `Video ${index + 1}`,
+                  name: v.name || `Video ${index + 1}`,
                   path: v.id,
                   publicUrl: v.streamUrl,
                   type: 'video' as const,

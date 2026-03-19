@@ -27,6 +27,7 @@ export async function GET() {
         const playbackId = asset.playback_ids![0].id
         return {
           id: asset.id,
+          name: asset.passthrough || null,
           playbackId,
           streamUrl: `https://stream.mux.com/${playbackId}`,
           thumbnailUrl: `https://image.mux.com/${playbackId}/thumbnail.webp?width=320&height=180`,

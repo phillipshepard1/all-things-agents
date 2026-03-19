@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createMuxClient } from '@/lib/mux/client'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -11,11 +11,15 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const body = await request.json().catch(() => ({}))
+    const filename = body.filename || ''
+
     const mux = createMuxClient()
 
     const upload = await mux.video.uploads.create({
       new_asset_settings: {
         playback_policies: ['public'],
+        ...(filename ? { passthrough: filename } : {}),
       },
       cors_origin: '*',
     })
