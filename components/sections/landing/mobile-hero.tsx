@@ -427,7 +427,7 @@ export function MobileHero() {
                 </div>
 
                 {/* Carousel */}
-                <div className="flex items-center gap-4 md:gap-6">
+                <div className="flex items-center gap-2 md:gap-6">
                   {/* Left arrow */}
                   <button
                     onClick={goToPrev}

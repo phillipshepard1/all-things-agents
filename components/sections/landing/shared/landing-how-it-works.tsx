@@ -66,7 +66,7 @@ export function LandingHowItWorks({
               <BlurFade key={index} delay={0.2 + index * 0.1} inView>
                 <div className="relative flex flex-col items-center text-center">
                   {/* Step number */}
-                  <div className="absolute -top-2 -left-2 md:left-auto md:-top-4 h-8 w-8 rounded-full bg-[#7a36dd] text-white text-sm font-bold flex items-center justify-center">
+                  <div className="absolute -top-3 -right-3 md:-top-4 md:-left-2 md:right-auto h-8 w-8 rounded-full bg-[#7a36dd] text-white text-sm font-bold flex items-center justify-center">
                     {index + 1}
                   </div>
 
@@ -101,7 +101,7 @@ export function LandingHowItWorks({
                   shimmerColor="#ffffff"
                   background="#7a36dd"
                   borderRadius="14px"
-                  className="h-14 px-10 text-lg font-medium shadow-warm-lg"
+                  className="h-14 px-10 text-lg font-medium shadow-warm-lg w-full sm:w-auto"
                 >
                   {ctaText}
                   <ArrowRight className="ml-2 h-5 w-5" />

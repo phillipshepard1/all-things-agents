@@ -96,7 +96,7 @@ export function WorkLifeHero() {
                     stiffness: 100,
                     damping: 20,
                   }}
-                  className="relative w-1/2 rounded-l-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 md:p-8 overflow-hidden"
+                  className="relative w-1/2 rounded-l-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-4 md:p-8 overflow-hidden"
                 >
                   {/* Dark stressed pulse overlay */}
                   <motion.div
@@ -206,7 +206,7 @@ export function WorkLifeHero() {
                       damping: 18
                     }
                   }}
-                  className={`relative bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/30 dark:to-gray-900 p-6 md:p-8 ${
+                  className={`relative bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/30 dark:to-gray-900 p-4 md:p-8 ${
                     centerAfter
                       ? 'w-full rounded-2xl'
                       : 'w-1/2 rounded-r-2xl'

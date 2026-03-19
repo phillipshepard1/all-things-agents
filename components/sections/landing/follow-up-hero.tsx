@@ -126,7 +126,7 @@ export function FollowUpHero() {
                   shimmerColor="#ffffff"
                   background="#7a36dd"
                   borderRadius="14px"
-                  className="h-14 px-10 text-lg font-medium shadow-warm-lg md:h-16 md:px-12 md:text-xl"
+                  className="h-14 px-10 text-lg font-medium shadow-warm-lg md:h-16 md:px-12 md:text-xl w-full sm:w-auto"
                 >
                   Start Free Trial
                   <ArrowRight className="ml-2.5 h-5 w-5 md:h-6 md:w-6" />

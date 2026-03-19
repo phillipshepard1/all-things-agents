@@ -154,7 +154,7 @@ export function OrganizationHero() {
                         stiffness: 100,
                         damping: 20,
                       }}
-                      className="relative w-1/2 rounded-l-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-6 md:p-8 overflow-hidden"
+                      className="relative w-1/2 rounded-l-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4 md:p-8 overflow-hidden"
                     >
                       {/* Red stress pulse overlay */}
                       <motion.div

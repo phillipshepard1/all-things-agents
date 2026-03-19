@@ -33,21 +33,36 @@ export function MediaPickerModal({
     setError(null)
 
     try {
-      const response = await fetch(`/api/media/list?bucket=${bucket}&folder=${folder}`)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch files')
+      // For videos, fetch from Mux; for images, fetch from Supabase
+      if (mediaType === 'video') {
+        const response = await fetch('/api/media/mux-videos')
+        if (!response.ok) throw new Error('Failed to fetch videos')
+        const data = await response.json()
+        setFiles(
+          (data.videos || []).map((v: any) => ({
+            id: v.id,
+            name: `Video ${v.id.slice(0, 8)}`,
+            path: v.playbackId,
+            publicUrl: v.streamUrl,
+            type: 'video' as const,
+            size: 0,
+            createdAt: v.createdAt || new Date().toISOString(),
+            thumbnailUrl: v.thumbnailUrl,
+          }))
+        )
+      } else {
+        const response = await fetch(`/api/media/list?bucket=${bucket}&folder=${folder}`)
+        if (!response.ok) throw new Error('Failed to fetch files')
+        const data = await response.json()
+        setFiles(data.files)
       }
-
-      const data = await response.json()
-      setFiles(data.files)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setFiles([])
     } finally {
       setLoading(false)
     }
-  }, [bucket, folder])
+  }, [bucket, folder, mediaType])
 
   useEffect(() => {
     if (isOpen) {
@@ -138,6 +153,7 @@ interface MediaPickerItemProps {
 
 function MediaPickerItem({ file, onSelect }: MediaPickerItemProps) {
   const [imageError, setImageError] = useState(false)
+  const thumbnailUrl = (file as any).thumbnailUrl
 
   return (
     <button
@@ -149,12 +165,20 @@ function MediaPickerItem({ file, onSelect }: MediaPickerItemProps) {
       <div className="relative aspect-video bg-gray-100 overflow-hidden">
         {file.type === 'video' ? (
           <>
-            <video
-              src={file.publicUrl}
-              className="w-full h-full object-cover"
-              muted
-              preload="metadata"
-            />
+            {thumbnailUrl ? (
+              <img
+                src={thumbnailUrl}
+                alt={file.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <video
+                src={file.publicUrl}
+                className="w-full h-full object-cover"
+                muted
+                preload="metadata"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
@@ -181,9 +205,11 @@ function MediaPickerItem({ file, onSelect }: MediaPickerItemProps) {
         <p className="text-xs font-medium text-gray-900 truncate" title={file.name}>
           {file.name}
         </p>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {formatBytes(file.size)}
-        </p>
+        {file.size > 0 && (
+          <p className="text-xs text-gray-500 mt-0.5">
+            {formatBytes(file.size)}
+          </p>
+        )}
       </div>
     </button>
   )

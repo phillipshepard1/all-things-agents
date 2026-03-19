@@ -74,7 +74,7 @@ export function LandingSolution({
                 shimmerColor="#ffffff"
                 background="#7a36dd"
                 borderRadius="14px"
-                className="h-14 px-10 text-lg font-medium shadow-warm-lg"
+                className="h-14 px-10 text-lg font-medium shadow-warm-lg w-full sm:w-auto"
               >
                 {ctaText}
                 <ArrowRight className="ml-2 h-5 w-5" />

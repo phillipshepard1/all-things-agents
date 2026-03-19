@@ -21,7 +21,7 @@ export function LandingFinalCTA({
   trustText = "No credit card required • 30-day free trial • Cancel anytime",
 }: LandingFinalCTAProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#7a36dd] to-[#5a1fb3] py-20 md:py-28">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#7a36dd] to-[#5a1fb3] py-20 pb-32 md:py-28 md:pb-28">
       {/* Decorative background elements */}
       <div className="absolute inset-0 -z-0">
         <div className="absolute left-1/4 top-0 h-[28rem] w-[28rem] rounded-full bg-white/5 blur-3xl" />

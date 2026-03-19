@@ -28,7 +28,7 @@ const landingFAQs = [
   },
   {
     question: "Is the AI going to do something weird?",
-    answer: "MYRA is trained specifically for real estate. She understands your business and speaks your language. Think of her as a really smart assistant who happens to never forget anything.",
+    answer: "MYRA is trained specifically for real estate. She understands your business and speaks your language. And everything MYRA suggests gets reviewed by you before it\u2019s saved\u2014so you\u2019re always in control.",
   },
   {
     question: "What if I want to cancel?",
