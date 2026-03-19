@@ -8,6 +8,7 @@ import { MediaGrid } from './media-grid'
 import { MediaList } from './media-list'
 import { MediaPreviewModal } from './media-preview-modal'
 import { VideoUploadModal } from '../editor/video-upload-modal'
+import { PhotoUploadModal } from './photo-upload-modal'
 
 interface MediaLibraryProps extends MediaLibraryConfig {}
 
@@ -23,6 +24,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
   const [deleteConfirm, setDeleteConfirm] = useState<MediaFile | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false)
 
   // Fetch both photos and videos once on mount
   useEffect(() => {
@@ -134,6 +136,7 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
           onViewModeChange={setViewMode}
           photosCount={photosData.length}
           videosCount={videosData.length}
+          onUploadPhoto={() => setShowPhotoUploadModal(true)}
           onUploadVideo={() => setShowUploadModal(true)}
         />
 
@@ -216,6 +219,24 @@ export function MediaLibrary({ bucket, folders, title, description }: MediaLibra
           </div>
         </div>
       )}
+
+      {/* Photo Upload Modal */}
+      <PhotoUploadModal
+        isOpen={showPhotoUploadModal}
+        onClose={() => setShowPhotoUploadModal(false)}
+        onUploaded={async () => {
+          setActiveTab('photos')
+          try {
+            const res = await fetch(`/api/media/list?bucket=${bucket}&folder=${folders.images}`)
+            if (res.ok) {
+              const data = await res.json()
+              setPhotosData(data.files || [])
+            }
+          } catch {
+            // Upload succeeded, list refresh failed — not critical
+          }
+        }}
+      />
 
       {/* Video Upload Modal */}
       <VideoUploadModal

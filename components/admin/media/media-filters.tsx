@@ -12,6 +12,7 @@ interface MediaFiltersProps {
   photosCount: number
   videosCount: number
   onUploadVideo?: () => void
+  onUploadPhoto?: () => void
 }
 
 const gridOptions: { value: ViewMode; label: string; icon: React.ReactNode }[] = [
@@ -28,6 +29,7 @@ export function MediaFilters({
   photosCount,
   videosCount,
   onUploadVideo,
+  onUploadPhoto,
 }: MediaFiltersProps) {
   const [isGridDropdownOpen, setIsGridDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -97,6 +99,15 @@ export function MediaFilters({
 
       {/* Actions + View Mode Toggle */}
       <div className="flex items-center gap-3 pr-4">
+        {activeTab === 'photos' && onUploadPhoto && (
+          <button
+            onClick={onUploadPhoto}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#7a36dd] hover:bg-[#6b2cc4] rounded-lg transition-colors"
+          >
+            <Upload className="h-4 w-4" />
+            Upload Photo
+          </button>
+        )}
         {activeTab === 'videos' && onUploadVideo && (
           <button
             onClick={onUploadVideo}
