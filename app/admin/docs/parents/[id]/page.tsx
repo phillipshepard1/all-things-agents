@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 
 export default function EditParentPage() {
@@ -26,14 +26,8 @@ export default function EditParentPage() {
   useEffect(() => {
     async function fetchParent() {
       try {
-        const supabase = createClient()
-        const { data, error: fetchError } = await supabase
-          .from('doc_parents')
-          .select('*')
-          .eq('id', parentId)
-          .single()
-
-        if (fetchError) throw fetchError
+        const pb = createClient()
+        const data = await pb.collection('doc_parents').getOne(parentId)
 
         setFormData({
           title: data.title || '',
@@ -57,20 +51,14 @@ export default function EditParentPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
-      const { error: updateError } = await supabase
-        .from('doc_parents')
-        .update({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description || null,
-          is_active: formData.is_active,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', parentId)
-
-      if (updateError) throw updateError
+      await pb.collection('doc_parents').update(parentId, {
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description || null,
+        is_active: formData.is_active,
+      })
 
       // Revalidate support pages to reflect parent changes in navigation
       await revalidateSupportPages({ type: 'category' })

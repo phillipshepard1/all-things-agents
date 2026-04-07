@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
 export default function NewBlogCategoryPage() {
@@ -52,36 +52,30 @@ export default function NewBlogCategoryPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
       // Get max sort_order for this product
-      let orderQuery = supabase
-        .from('blog_categories')
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1)
+      const filter = selectedProduct
+        ? `product_id = "${selectedProduct}"`
+        : ''
 
-      if (selectedProduct) {
-        orderQuery = orderQuery.eq('product_id', selectedProduct)
-      }
-
-      const { data: existing } = await orderQuery
+      const existing = await pb.collection('blog_categories').getFullList({
+        filter,
+        sort: '-sort_order',
+        fields: 'sort_order',
+      })
 
       const nextOrder = (existing?.[0]?.sort_order || 0) + 1
 
-      const { error: insertError } = await supabase
-        .from('blog_categories')
-        .insert({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description || null,
-          icon: formData.icon || null,
-          is_active: formData.is_active,
-          sort_order: nextOrder,
-          product_id: selectedProduct,
-        })
-
-      if (insertError) throw insertError
+      await pb.collection('blog_categories').create({
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description || null,
+        icon: formData.icon || null,
+        is_active: formData.is_active,
+        sort_order: nextOrder,
+        product_id: selectedProduct,
+      })
 
       router.push('/admin/blog/categories')
     } catch (e: any) {

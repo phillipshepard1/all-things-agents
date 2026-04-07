@@ -1,21 +1,22 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { MediaFile } from '@/lib/media/types'
 import { getMediaType, generateFileId } from '@/lib/media/utils'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const pb = await createClient()
 
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    if (!pb.authStore.isValid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
+    // bucket and folder params are kept for backward compat but ignored —
+    // PocketBase serves all media from the 'media' collection
     const { searchParams } = new URL(request.url)
     const bucket = searchParams.get('bucket')
     const folder = searchParams.get('folder')
@@ -27,40 +28,26 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // List files from Supabase storage
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(folder, {
-        sortBy: { column: 'created_at', order: 'desc' },
-      })
+    // List files from PocketBase media collection
+    const records = await pb.collection('media').getFullList({
+      sort: '-created',
+    })
 
-    if (error) {
-      console.error('List files error:', error)
-      return NextResponse.json(
-        { error: 'Failed to list files' },
-        { status: 500 }
-      )
-    }
+    // Map to MediaFile format
+    const files: MediaFile[] = records.map((record) => {
+      const fileName = record.file as string
+      const publicUrl = pb.files.getURL(record, fileName)
 
-    // Filter out folders (items with id = null) and map to MediaFile format
-    const files: MediaFile[] = (data || [])
-      .filter((item) => item.id !== null && item.name !== '.emptyFolderPlaceholder')
-      .map((item) => {
-        const path = `${folder}/${item.name}`
-        const { data: urlData } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(path)
-
-        return {
-          id: generateFileId(path),
-          name: item.name,
-          path,
-          publicUrl: urlData.publicUrl,
-          type: getMediaType(item.name),
-          size: item.metadata?.size || 0,
-          createdAt: item.created_at || new Date().toISOString(),
-        }
-      })
+      return {
+        id: generateFileId(record.id),
+        name: fileName,
+        path: fileName,
+        publicUrl,
+        type: getMediaType(fileName),
+        size: record.size || 0,
+        createdAt: record.created,
+      }
+    })
 
     return NextResponse.json({ files })
   } catch (error) {

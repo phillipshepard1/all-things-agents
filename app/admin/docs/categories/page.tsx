@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit2, Trash2, GripVertical, FileText } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
@@ -32,75 +32,75 @@ export default function CategoriesPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const fetchCategories = async () => {
-    const supabase = createClient()
+    const pb = createClient()
 
-    // Fetch categories filtered by product
-    let catQuery = supabase
-      .from('doc_categories')
-      .select('*')
-      .order('sort_order')
+    try {
+      // Fetch categories filtered by product
+      const catFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
 
-    if (selectedProduct && selectedProduct !== 'hub') {
-      catQuery = catQuery.eq('product_id', selectedProduct)
+      const cats = await pb.collection('doc_categories').getFullList({
+        filter: catFilter,
+        sort: 'sort_order',
+      })
+
+      // Fetch parents for lookup (with sort_order for grouping)
+      const parentFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
+
+      const parentsData = await pb.collection('doc_parents').getFullList({
+        filter: parentFilter,
+        sort: 'sort_order',
+        fields: 'id,title,sort_order',
+      })
+
+      const parentMap: Record<string, { title: string; sort_order: number }> = {}
+      ;(parentsData || []).forEach((p) => {
+        parentMap[p.id] = { title: p.title, sort_order: p.sort_order }
+      })
+
+      // Get doc counts filtered by product
+      const docFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
+
+      const docs = await pb.collection('support_docs').getFullList({
+        filter: docFilter,
+        fields: 'category_id',
+      })
+
+      const docCounts = (docs || []).reduce((acc, doc) => {
+        if (doc.category_id) {
+          acc[doc.category_id] = (acc[doc.category_id] || 0) + 1
+        }
+        return acc
+      }, {} as Record<string, number>)
+
+      const mapped = (cats || []).map((cat) => ({
+        id: cat.id,
+        slug: cat.slug,
+        title: cat.title,
+        description: cat.description || null,
+        sort_order: cat.sort_order || 0,
+        is_active: cat.is_active ?? true,
+        doc_count: docCounts[cat.id] || 0,
+        parent_id: cat.parent_id || null,
+        parent_title: cat.parent_id ? (parentMap[cat.parent_id]?.title || null) : null,
+      }))
+
+      // Sort by parent sort_order first, then category sort_order within each parent
+      mapped.sort((a, b) => {
+        const aParentSort = a.parent_id ? (parentMap[a.parent_id]?.sort_order ?? 999) : 999
+        const bParentSort = b.parent_id ? (parentMap[b.parent_id]?.sort_order ?? 999) : 999
+        return aParentSort - bParentSort || a.sort_order - b.sort_order
+      })
+
+      setCategories(mapped)
+    } catch (e) {
+      console.error('Error fetching categories:', e)
     }
-
-    const { data: cats, error: catError } = await catQuery
-
-    if (catError) {
-      console.error('Error fetching categories:', catError)
-      setLoading(false)
-      return
-    }
-
-    // Fetch parents for lookup (with sort_order for grouping)
-    let parentQuery = supabase
-      .from('doc_parents')
-      .select('id, title, sort_order')
-      .order('sort_order')
-
-    if (selectedProduct && selectedProduct !== 'hub') {
-      parentQuery = parentQuery.eq('product_id', selectedProduct)
-    }
-
-    const { data: parentsData } = await parentQuery
-    const parentMap: Record<string, { title: string; sort_order: number }> = {}
-    ;(parentsData || []).forEach((p) => {
-      parentMap[p.id] = { title: p.title, sort_order: p.sort_order }
-    })
-
-    // Get doc counts filtered by product
-    let docQuery = supabase
-      .from('support_docs')
-      .select('category_id')
-
-    if (selectedProduct && selectedProduct !== 'hub') {
-      docQuery = docQuery.eq('product_id', selectedProduct)
-    }
-
-    const { data: docs } = await docQuery
-
-    const docCounts = (docs || []).reduce((acc, doc) => {
-      if (doc.category_id) {
-        acc[doc.category_id] = (acc[doc.category_id] || 0) + 1
-      }
-      return acc
-    }, {} as Record<string, number>)
-
-    const mapped = (cats || []).map((cat) => ({
-      ...cat,
-      doc_count: docCounts[cat.id] || 0,
-      parent_id: cat.parent_id || null,
-      parent_title: cat.parent_id ? (parentMap[cat.parent_id]?.title || null) : null,
-    }))
-
-    // Sort by parent sort_order first, then category sort_order within each parent
-    mapped.sort((a, b) => {
-      const aParentSort = a.parent_id ? (parentMap[a.parent_id]?.sort_order ?? 999) : 999
-      const bParentSort = b.parent_id ? (parentMap[b.parent_id]?.sort_order ?? 999) : 999
-      return aParentSort - bParentSort || a.sort_order - b.sort_order
-    })
-
-    setCategories(mapped)
     setLoading(false)
   }
 
@@ -119,19 +119,15 @@ export default function CategoriesPage() {
     if (!confirm('Are you sure you want to delete this category?')) return
 
     setDeleting(id)
-    const supabase = createClient()
+    const pb = createClient()
 
-    const { error } = await supabase
-      .from('doc_categories')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      alert('Error deleting category: ' + error.message)
-    } else {
+    try {
+      await pb.collection('doc_categories').delete(id)
       setCategories((prev) => prev.filter((c) => c.id !== id))
       // Revalidate support pages to update navigation
       await revalidateSupportPages({ type: 'category' })
+    } catch (error: any) {
+      alert('Error deleting category: ' + (error.message || 'Unknown error'))
     }
     setDeleting(null)
   }
@@ -155,13 +151,10 @@ export default function CategoriesPage() {
     setCategories(updated)
 
     // Save to database
-    const supabase = createClient()
+    const pb = createClient()
     await Promise.all(
       updated.map((cat) =>
-        supabase
-          .from('doc_categories')
-          .update({ sort_order: cat.sort_order })
-          .eq('id', cat.id)
+        pb.collection('doc_categories').update(cat.id, { sort_order: cat.sort_order })
       )
     )
 

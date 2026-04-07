@@ -1,48 +1,54 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
+import { createAdminClient } from '@/lib/pocketbase/admin'
 import { SettingsTabs } from './components/settings-tabs'
 
 export default async function AdminSettingsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const pb = await createClient()
 
-  if (!user) {
+  if (!pb.authStore.isValid || !pb.authStore.record) {
     redirect('/login')
   }
 
-  // Get current user's profile
-  const { data: profile } = await supabase
-    .from('admin_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const user = pb.authStore.record
 
-  if (!profile) {
+  if (!user.role) {
     redirect('/login?error=unauthorized')
   }
 
-  const isAdmin = profile.role === 'admin'
+  const isAdmin = user.role === 'admin'
 
   // Get team members if admin
-  let teamMembers: typeof profile[] = []
+  let teamMembers: { id: string; email: string; name: string; role: string; created_at: string; updated_at: string }[] = []
   let pendingInvites: { id: string; email: string; role: string; created_at: string; expires_at: string }[] = []
 
   if (isAdmin) {
-    const { data: members } = await supabase
-      .from('admin_profiles')
-      .select('*')
-      .order('created_at', { ascending: true })
+    try {
+      const adminPb = await createAdminClient()
+      const members = await adminPb.collection('users').getFullList({ sort: 'created' })
+      teamMembers = members.map(m => ({
+        id: m.id,
+        email: m.email,
+        name: m.name || '',
+        role: m.role,
+        created_at: m.created,
+        updated_at: m.updated,
+      }))
 
-    teamMembers = members || []
-
-    const { data: invites } = await supabase
-      .from('team_invites')
-      .select('*')
-      .is('accepted_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-
-    pendingInvites = invites || []
+      const invites = await adminPb.collection('team_invites').getFullList({
+        filter: `accepted_at = "" && expires_at > "${new Date().toISOString()}"`,
+        sort: '-created',
+      })
+      pendingInvites = invites.map(i => ({
+        id: i.id,
+        email: i.email,
+        role: i.role,
+        created_at: i.created,
+        expires_at: i.expires_at,
+      }))
+    } catch (err) {
+      console.error('Error fetching team data:', err)
+    }
   }
 
   return (
@@ -60,8 +66,8 @@ export default async function AdminSettingsPage() {
         user={{
           id: user.id,
           email: user.email || '',
-          name: profile.name || '',
-          role: profile.role,
+          name: user.name || '',
+          role: user.role,
         }}
         isAdmin={isAdmin}
         teamMembers={teamMembers}

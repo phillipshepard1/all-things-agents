@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Calendar, Clock, ArrowRight, ArrowLeft, FolderOpen } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { JsonLd, generateBreadcrumbSchema } from '@/components/seo/JsonLd'
@@ -13,37 +13,34 @@ export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const supabase = await createClient()
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clientkeeper.io'
+  const pb = await createClient()
 
-  const { data: category } = await supabase
-    .from('blog_categories')
-    .select('title, description')
-    .eq('slug', params.slug)
-    .eq('is_active', true)
-    .single()
+  try {
+    const category = await pb.collection('blog_categories').getFirstListItem(
+      `slug = "${params.slug}" && is_active = true`,
+      { fields: 'title,description' }
+    )
 
-  if (!category) {
+    const description = category.description || `Browse ${category.title} articles on the Client Keeper blog.`
+
+    return {
+      title: `${category.title} | Client Keeper Blog`,
+      description,
+      alternates: {
+        canonical: `${baseUrl}/blog/category/${params.slug}`,
+      },
+      openGraph: {
+        title: `${category.title} | Client Keeper Blog`,
+        description,
+        url: `${baseUrl}/blog/category/${params.slug}`,
+        siteName: 'Client Keeper',
+        type: 'website',
+      },
+    }
+  } catch {
     return {
       title: 'Category Not Found | Client Keeper Blog',
     }
-  }
-
-  const description = category.description || `Browse ${category.title} articles on the Client Keeper blog.`
-
-  return {
-    title: `${category.title} | Client Keeper Blog`,
-    description,
-    alternates: {
-      canonical: `${baseUrl}/blog/category/${params.slug}`,
-    },
-    openGraph: {
-      title: `${category.title} | Client Keeper Blog`,
-      description,
-      url: `${baseUrl}/blog/category/${params.slug}`,
-      siteName: 'Client Keeper',
-      type: 'website',
-    },
   }
 }
 
@@ -65,49 +62,49 @@ interface BlogPost {
   tags: string[] | null
   published_at: string | null
   category_id: string | null
-  blog_categories: Category | null
+  expand?: {
+    category_id?: Category
+  }
 }
 
 export default async function BlogCategoryPage(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const supabase = await createClient()
+  const pb = await createClient()
 
   // Fetch the category
-  const { data: category } = await supabase
-    .from('blog_categories')
-    .select('*')
-    .eq('slug', params.slug)
-    .eq('is_active', true)
-    .single()
-
-  if (!category) {
+  let category: Category
+  try {
+    category = await pb.collection('blog_categories').getFirstListItem<Category>(
+      `slug = "${params.slug}" && is_active = true`
+    )
+  } catch {
     notFound()
   }
 
   // Fetch posts in this category
-  const { data: posts } = await supabase
-    .from('blog_posts')
-    .select(`
-      *,
-      blog_categories (
-        id,
-        slug,
-        title,
-        icon
-      )
-    `)
-    .eq('status', 'published')
-    .eq('category_id', category.id)
-    .order('published_at', { ascending: false }) as { data: BlogPost[] | null }
+  let posts: BlogPost[] = []
+  try {
+    posts = await pb.collection('blog_posts').getFullList<BlogPost>({
+      filter: `status = "published" && category_id = "${category.id}"`,
+      sort: '-published_at',
+      expand: 'category_id',
+    })
+  } catch {
+    // Silently fail
+  }
 
   // Fetch all active categories for filter
-  const { data: categories } = await supabase
-    .from('blog_categories')
-    .select('id, slug, title, icon')
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true })
+  let categories: Category[] = []
+  try {
+    categories = await pb.collection('blog_categories').getFullList<Category>({
+      filter: 'is_active = true',
+      sort: 'sort_order',
+    })
+  } catch {
+    // Silently fail
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

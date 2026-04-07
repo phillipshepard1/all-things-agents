@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 
 export default function EditBlogCategoryPage() {
   const router = useRouter()
@@ -28,31 +28,24 @@ export default function EditBlogCategoryPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const supabase = createClient()
+        const pb = createClient()
 
-        const { data, error: fetchError } = await supabase
-          .from('blog_categories')
-          .select('*')
-          .eq('id', categoryId)
-          .single()
-
-        if (fetchError) throw fetchError
+        const data = await pb.collection('blog_categories').getOne(categoryId)
 
         setFormData({
           title: data.title || '',
           slug: data.slug || '',
-          description: data.description || '',
-          icon: data.icon || '',
-          is_active: data.is_active ?? true,
+          description: (data as any).description || '',
+          icon: (data as any).icon || '',
+          is_active: (data as any).is_active ?? true,
         })
 
         // Get post count
-        const { count } = await supabase
-          .from('blog_posts')
-          .select('*', { count: 'exact', head: true })
-          .eq('category_id', categoryId)
+        const result = await pb.collection('blog_posts').getList(1, 1, {
+          filter: `category_id = "${categoryId}"`,
+        })
 
-        setPostCount(count || 0)
+        setPostCount(result.totalItems)
       } catch (e: any) {
         setError(e.message || 'Failed to fetch category')
       } finally {
@@ -69,21 +62,15 @@ export default function EditBlogCategoryPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
-      const { error: updateError } = await supabase
-        .from('blog_categories')
-        .update({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description || null,
-          icon: formData.icon || null,
-          is_active: formData.is_active,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', categoryId)
-
-      if (updateError) throw updateError
+      await pb.collection('blog_categories').update(categoryId, {
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description || null,
+        icon: formData.icon || null,
+        is_active: formData.is_active,
+      })
 
       router.push('/admin/blog/categories')
     } catch (e: any) {
@@ -102,13 +89,8 @@ export default function EditBlogCategoryPage() {
 
     setDeleting(true)
     try {
-      const supabase = createClient()
-      const { error: deleteError } = await supabase
-        .from('blog_categories')
-        .delete()
-        .eq('id', categoryId)
-
-      if (deleteError) throw deleteError
+      const pb = createClient()
+      await pb.collection('blog_categories').delete(categoryId)
 
       router.push('/admin/blog/categories')
     } catch (e: any) {

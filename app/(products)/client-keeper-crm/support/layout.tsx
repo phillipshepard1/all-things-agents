@@ -26,7 +26,7 @@ export default async function SupportLayout({ children }: { children: ReactNode 
         sidebar={{
           banner: (
             <div className="flex flex-col gap-3">
-              <span className="px-2 text-2xl font-bold text-foreground">Client Keeper</span>
+              <span className="px-3 text-2xl font-bold text-foreground">Client Keeper</span>
               <hr className="border-border" />
               <div className="px-1">
                 <SearchTrigger />

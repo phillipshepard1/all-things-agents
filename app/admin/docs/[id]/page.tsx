@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Trash2, Eye, Edit3 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { NovelEditor } from '@/components/admin/editor/novel-editor'
 import type { GuideImportResult } from '@/lib/editor/guide-markdown-parser'
 import { VideoUpload } from '@/components/admin/editor/video-upload'
@@ -58,62 +58,55 @@ export default function EditDocPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const supabase = createClient()
+        const pb = createClient()
 
         // Fetch doc first to get its product_id
-        const { data, error: fetchError } = await supabase
-          .from('support_docs')
-          .select('*')
-          .eq('id', docId)
-          .single()
-
-        if (fetchError) throw fetchError
+        const data = await pb.collection('support_docs').getOne(docId)
 
         // Store the doc's product_id
         setDocProductId(data.product_id || null)
 
         // Fetch parents filtered by the doc's product_id
-        let parentQuery = supabase
-          .from('doc_parents')
-          .select('id, title, slug')
-          .eq('is_active', true)
-          .order('sort_order')
-
+        const parentFilters: string[] = ['is_active = true']
         if (data.product_id) {
-          parentQuery = parentQuery.eq('product_id', data.product_id)
+          parentFilters.push(`product_id = "${data.product_id}"`)
         }
 
-        const { data: parentsData } = await parentQuery
-        if (parentsData) setParents(parentsData)
+        const parentsData = await pb.collection('doc_parents').getFullList({
+          filter: parentFilters.join(' && '),
+          sort: 'sort_order',
+          fields: 'id,title,slug',
+        })
+        if (parentsData) setParents(parentsData as unknown as Parent[])
 
         // Look up which parent the doc's category belongs to
         let docParentId = ''
         if (data.category_id) {
-          const { data: catData } = await supabase
-            .from('doc_categories')
-            .select('parent_id')
-            .eq('id', data.category_id)
-            .single()
-          docParentId = catData?.parent_id || ''
+          try {
+            const catData = await pb.collection('doc_categories').getOne(data.category_id, {
+              fields: 'parent_id',
+            })
+            docParentId = catData?.parent_id || ''
+          } catch {
+            // Category not found
+          }
         }
 
         // Fetch categories filtered by the doc's product_id and parent
-        let catQuery = supabase
-          .from('doc_categories')
-          .select('id, slug, title')
-          .eq('is_active', true)
-          .order('sort_order')
-
+        const catFilters: string[] = ['is_active = true']
         if (data.product_id) {
-          catQuery = catQuery.eq('product_id', data.product_id)
+          catFilters.push(`product_id = "${data.product_id}"`)
         }
-
         if (docParentId) {
-          catQuery = catQuery.eq('parent_id', docParentId)
+          catFilters.push(`parent_id = "${docParentId}"`)
         }
 
-        const { data: cats } = await catQuery
-        if (cats) setCategories(cats)
+        const cats = await pb.collection('doc_categories').getFullList({
+          filter: catFilters.join(' && '),
+          sort: 'sort_order',
+          fields: 'id,slug,title',
+        })
+        if (cats) setCategories(cats as unknown as Category[])
 
         setFormData({
           title: data.title || '',
@@ -159,23 +152,23 @@ export default function EditDocPage() {
   const handleParentChange = async (newParentId: string) => {
     setFormData(prev => ({ ...prev, selectedParentId: newParentId, category_id: '' }))
 
-    const supabase = createClient()
-    let catQuery = supabase
-      .from('doc_categories')
-      .select('id, slug, title')
-      .eq('is_active', true)
-      .order('sort_order')
+    const pb = createClient()
+    const catFilters: string[] = ['is_active = true']
 
     if (docProductId) {
-      catQuery = catQuery.eq('product_id', docProductId)
+      catFilters.push(`product_id = "${docProductId}"`)
     }
 
     if (newParentId) {
-      catQuery = catQuery.eq('parent_id', newParentId)
+      catFilters.push(`parent_id = "${newParentId}"`)
     }
 
-    const { data: cats } = await catQuery
-    setCategories(cats || [])
+    const cats = await pb.collection('doc_categories').getFullList({
+      filter: catFilters.join(' && '),
+      sort: 'sort_order',
+      fields: 'id,slug,title',
+    })
+    setCategories((cats || []) as unknown as Category[])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,31 +177,24 @@ export default function EditDocPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const pb = createClient()
 
       // Find category slug for the text column (backwards compat)
       const selectedCat = categories.find(c => c.id === formData.category_id)
 
-      const { error: updateError } = await supabase
-        .from('support_docs')
-        .update({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description,
-          category_id: formData.category_id || null,
-          category: selectedCat?.slug || null,
-          video_url: formData.video_url || null,
-          video_position: formData.video_url ? formData.video_position : null,
-          status: formData.status,
-          content,
-          published_at: formData.status === 'scheduled' ? formData.published_at :
-                        formData.status === 'published' ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', docId)
-
-      if (updateError) throw updateError
+      await pb.collection('support_docs').update(docId, {
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description,
+        category_id: formData.category_id || null,
+        category: selectedCat?.slug || null,
+        video_url: formData.video_url || null,
+        video_position: formData.video_url ? formData.video_position : null,
+        status: formData.status,
+        content,
+        published_at: formData.status === 'scheduled' ? formData.published_at :
+                      formData.status === 'published' ? new Date().toISOString() : null,
+      })
 
       // Revalidate support pages to reflect updated content
       await revalidateSupportPages({ type: 'doc' })
@@ -227,13 +213,8 @@ export default function EditDocPage() {
 
     setDeleting(true)
     try {
-      const supabase = createClient()
-      const { error: deleteError } = await supabase
-        .from('support_docs')
-        .delete()
-        .eq('id', docId)
-
-      if (deleteError) throw deleteError
+      const pb = createClient()
+      await pb.collection('support_docs').delete(docId)
 
       // Revalidate support pages to remove deleted content
       await revalidateSupportPages({ type: 'doc' })

@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/pocketbase/server'
 import { AdminSidebar } from '@/components/admin/layout/admin-sidebar'
 import { AdminHeader } from '@/components/admin/layout/admin-header'
 import { AdminProductProvider } from '@/lib/products/admin-context'
@@ -23,32 +22,22 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  const pb = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // If no user, the middleware will handle redirect
-  // But we still check here for the layout
-  if (!user) {
+  if (!pb.authStore.isValid || !pb.authStore.record) {
     redirect('/login')
   }
 
-  // Get admin profile using service role to bypass RLS
-  const adminSupabase = createAdminClient()
-  const { data: profile } = await adminSupabase
-    .from('admin_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const user = pb.authStore.record
 
-  if (!profile) {
+  if (!user.role) {
     redirect('/login?error=unauthorized')
   }
 
   const userProfile = {
     email: user.email || '',
-    full_name: profile.full_name,
-    role: profile.role,
+    full_name: user.name,
+    role: user.role,
   }
 
   return (

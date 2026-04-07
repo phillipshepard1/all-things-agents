@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
@@ -26,20 +26,20 @@ export default function NewCategoryPage() {
   // Fetch parents filtered by product
   useEffect(() => {
     async function fetchParents() {
-      const supabase = createClient()
-      let query = supabase
-        .from('doc_parents')
-        .select('id, title')
-        .eq('is_active', true)
-        .order('sort_order')
-
+      const pb = createClient()
+      const filters: string[] = ['is_active = true']
       if (selectedProduct && selectedProduct !== 'hub') {
-        query = query.eq('product_id', selectedProduct)
+        filters.push(`product_id = "${selectedProduct}"`)
       }
 
-      const { data } = await query
+      const data = await pb.collection('doc_parents').getFullList({
+        filter: filters.join(' && '),
+        sort: 'sort_order',
+        fields: 'id,title',
+      })
+
       if (data) {
-        setParents(data)
+        setParents(data as unknown as {id: string, title: string}[])
         // Default to "General" parent
         const generalParent = data.find((p) => p.title === 'General')
         setFormData((prev) => ({ ...prev, parent_id: generalParent?.id || '' }))
@@ -76,36 +76,30 @@ export default function NewCategoryPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
       // Get max sort_order for this product
-      let orderQuery = supabase
-        .from('doc_categories')
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1)
+      const orderFilter = selectedProduct
+        ? `product_id = "${selectedProduct}"`
+        : ''
 
-      if (selectedProduct) {
-        orderQuery = orderQuery.eq('product_id', selectedProduct)
-      }
-
-      const { data: existing } = await orderQuery
+      const existing = await pb.collection('doc_categories').getFullList({
+        filter: orderFilter,
+        sort: '-sort_order',
+        fields: 'sort_order',
+      })
 
       const nextOrder = (existing?.[0]?.sort_order || 0) + 1
 
-      const { error: insertError } = await supabase
-        .from('doc_categories')
-        .insert({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description || null,
-          is_active: formData.is_active,
-          parent_id: formData.parent_id || null,
-          sort_order: nextOrder,
-          product_id: selectedProduct,
-        })
-
-      if (insertError) throw insertError
+      await pb.collection('doc_categories').create({
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description || null,
+        is_active: formData.is_active,
+        parent_id: formData.parent_id || null,
+        sort_order: nextOrder,
+        product_id: selectedProduct,
+      })
 
       // Revalidate support pages to reflect new category in navigation
       await revalidateSupportPages({ type: 'category' })

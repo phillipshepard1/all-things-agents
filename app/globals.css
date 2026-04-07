@@ -343,6 +343,11 @@
   #nd-docs-layout [data-sidebar-placeholder] {
     --fd-sidebar-width: 320px !important;
   }
+
+  /* Prevent sidebar content from clipping off the left edge */
+  #nd-docs-layout {
+    padding-left: 2.5rem !important;
+  }
 }
 
 #nd-sidebar {

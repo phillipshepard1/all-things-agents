@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/pocketbase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clientkeeper.io";
@@ -107,21 +107,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch dynamic blog posts
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
-    const supabase = await createClient();
-    const { data: posts } = await supabase
-      .from("blog_posts")
-      .select("slug, updated_at, published_at")
-      .eq("status", "published")
-      .order("published_at", { ascending: false });
+    const pb = await createClient();
+    const posts = await pb.collection("blog_posts").getFullList({
+      filter: 'status = "published"',
+      sort: "-published_at",
+      fields: "slug,updated,published_at",
+    });
 
-    if (posts) {
-      blogPosts = posts.map((post) => ({
-        url: `${baseUrl}/client-keeper-crm/blog/${post.slug}`,
-        lastModified: new Date(post.updated_at || post.published_at),
-        changeFrequency: "weekly" as const,
-        priority: 0.6,
-      }));
-    }
+    blogPosts = posts.map((post) => ({
+      url: `${baseUrl}/client-keeper-crm/blog/${post.slug}`,
+      lastModified: new Date(post.updated || post.published_at),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
   } catch {
     // Silently fail if database is unavailable during build
   }
@@ -129,20 +127,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch blog categories
   let blogCategories: MetadataRoute.Sitemap = [];
   try {
-    const supabase = await createClient();
-    const { data: categories } = await supabase
-      .from("blog_categories")
-      .select("slug")
-      .eq("is_active", true);
+    const pb = await createClient();
+    const categories = await pb.collection("blog_categories").getFullList({
+      filter: "is_active = true",
+      fields: "slug",
+    });
 
-    if (categories) {
-      blogCategories = categories.map((category) => ({
-        url: `${baseUrl}/client-keeper-crm/blog/category/${category.slug}`,
-        lastModified: new Date(),
-        changeFrequency: "weekly" as const,
-        priority: 0.5,
-      }));
-    }
+    blogCategories = categories.map((category) => ({
+      url: `${baseUrl}/client-keeper-crm/blog/category/${category.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
   } catch {
     // Silently fail if database is unavailable during build
   }

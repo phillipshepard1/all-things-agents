@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Eye, Edit3, X, Plus, Calendar } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { NovelEditor } from '@/components/admin/editor/novel-editor'
 import { TiptapContent } from '@/components/support/tiptap-content'
 import { ImageUpload } from '@/components/admin/editor/image-upload'
@@ -42,21 +42,19 @@ export default function NewBlogPostPage() {
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const supabase = createClient()
-      let query = supabase
-        .from('blog_categories')
-        .select('id, slug, title')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true })
+      try {
+        const pb = createClient()
+        const filter = selectedProduct && selectedProduct !== 'hub'
+          ? `is_active = true && product_id = "${selectedProduct}"`
+          : 'is_active = true'
 
-      // Filter categories by product
-      if (selectedProduct && selectedProduct !== 'hub') {
-        query = query.eq('product_id', selectedProduct)
-      }
-
-      const { data } = await query
-      if (data) {
-        setCategories(data)
+        const data = await pb.collection('blog_categories').getFullList({
+          filter,
+          sort: 'sort_order',
+        })
+        setCategories(data as any)
+      } catch {
+        // Silently fail — categories dropdown will be empty
       }
     }
     fetchCategories()
@@ -108,8 +106,8 @@ export default function NewBlogPostPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const pb = createClient()
+      const user = pb.authStore.record
 
       // Serialize content to JSON string for storage
       const contentString = content ? JSON.stringify(content) : ''
@@ -124,26 +122,22 @@ export default function NewBlogPostPage() {
         scheduled_for = new Date(formData.scheduled_for).toISOString()
       }
 
-      const { error: insertError } = await supabase
-        .from('blog_posts')
-        .insert({
-          title: formData.title,
-          slug: formData.slug,
-          excerpt: formData.excerpt || null,
-          featured_image: formData.featured_image || null,
-          status: formData.status,
-          content: contentString,
-          tags: formData.tags,
-          published_at,
-          scheduled_for,
-          author_id: user?.id,
-          category_id: formData.category_id || null,
-          meta_description: formData.meta_description || null,
-          og_image: formData.og_image || null,
-          product_id: selectedProduct,
-        })
-
-      if (insertError) throw insertError
+      await pb.collection('blog_posts').create({
+        title: formData.title,
+        slug: formData.slug,
+        excerpt: formData.excerpt || null,
+        featured_image: formData.featured_image || null,
+        status: formData.status,
+        content: contentString,
+        tags: formData.tags,
+        published_at,
+        scheduled_for,
+        author_id: user?.id,
+        category_id: formData.category_id || null,
+        meta_description: formData.meta_description || null,
+        og_image: formData.og_image || null,
+        product_id: selectedProduct,
+      })
 
       router.push('/admin/blog')
     } catch (e: any) {

@@ -1,13 +1,12 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 import { createMuxClient } from '@/lib/mux/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const pb = await createClient()
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    if (!pb.authStore.isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

@@ -8,7 +8,7 @@ import {
   Plus,
   ArrowRight,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 
 const quickActions = [
   {
@@ -64,25 +64,25 @@ const contentSections = [
 ]
 
 export default async function AdminDashboard() {
-  const supabase = await createClient()
+  const pb = await createClient()
 
-  // Get counts for each content type (will work once tables exist)
+  // Get counts for each content type (will work once collections exist)
   let docCount = 0
   let blogCount = 0
   let testimonialCount = 0
 
   try {
     const [docs, blogs, testimonials] = await Promise.all([
-      supabase.from('support_docs').select('id', { count: 'exact', head: true }),
-      supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
-      supabase.from('testimonials').select('id', { count: 'exact', head: true }),
+      pb.collection('support_docs').getList(1, 1),
+      pb.collection('blog_posts').getList(1, 1),
+      pb.collection('testimonials').getList(1, 1),
     ])
 
-    docCount = docs.count || 0
-    blogCount = blogs.count || 0
-    testimonialCount = testimonials.count || 0
+    docCount = docs.totalItems
+    blogCount = blogs.totalItems
+    testimonialCount = testimonials.totalItems
   } catch {
-    // Tables don't exist yet - that's okay
+    // Collections don't exist yet - that's okay
   }
 
   return (

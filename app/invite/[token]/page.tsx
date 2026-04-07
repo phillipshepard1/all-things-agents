@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createBrowserClient } from '@supabase/ssr'
+import PocketBase from 'pocketbase'
 
 interface InviteData {
   id: string
@@ -20,37 +20,34 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   useEffect(() => {
     async function loadInvite() {
       const resolvedParams = await params
       setToken(resolvedParams.token)
 
-      // Fetch invite details
-      const { data, error: fetchError } = await supabase
-        .from('team_invites')
-        .select('*')
-        .eq('token', resolvedParams.token)
-        .is('accepted_at', null)
-        .gt('expires_at', new Date().toISOString())
-        .single()
+      const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
 
-      if (fetchError || !data) {
+      try {
+        // Fetch invite by token — use admin-like filter
+        const record = await pb.collection('team_invites').getFirstListItem(
+          `token = "${resolvedParams.token}" && accepted_at = "" && expires_at > "${new Date().toISOString()}"`
+        )
+
+        setInvite({
+          id: record.id,
+          email: record.email,
+          role: record.role,
+          expires_at: record.expires_at,
+        })
+      } catch {
         setError('This invite link is invalid or has expired.')
-        setLoading(false)
-        return
       }
 
-      setInvite(data)
       setLoading(false)
     }
 
     loadInvite()
-  }, [params, supabase])
+  }, [params])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -70,56 +67,31 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
       return
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters')
       setSubmitting(false)
       return
     }
 
     try {
-      // 1. Create user account
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const pb = new PocketBase(process.env.NEXT_PUBLIC_POCKETBASE_URL)
+
+      // 1. Create user account via API (needs to be done server-side ideally,
+      // but for invite flow we use the public create endpoint)
+      await pb.collection('users').create({
         email: invite.email,
         password,
-        options: {
-          data: { name },
-        },
+        passwordConfirm: password,
+        name,
+        role: invite.role,
       })
 
-      if (signUpError) {
-        setError(signUpError.message)
-        setSubmitting(false)
-        return
-      }
+      // 2. Mark invite as accepted
+      await pb.collection('team_invites').update(invite.id, {
+        accepted_at: new Date().toISOString(),
+      })
 
-      if (!authData.user) {
-        setError('Failed to create account')
-        setSubmitting(false)
-        return
-      }
-
-      // 2. Create admin profile
-      const { error: profileError } = await supabase
-        .from('admin_profiles')
-        .insert({
-          id: authData.user.id,
-          email: invite.email,
-          name,
-          role: invite.role,
-        })
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // Continue anyway - might be RLS issue but user exists
-      }
-
-      // 3. Mark invite as accepted
-      await supabase
-        .from('team_invites')
-        .update({ accepted_at: new Date().toISOString() })
-        .eq('id', invite.id)
-
-      // 4. Redirect to login
+      // 3. Redirect to login
       router.push('/login?message=account-created')
     } catch (err) {
       console.error('Error:', err)
@@ -233,7 +205,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
                 name="password"
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
                 placeholder="Create a password"
               />
@@ -248,7 +220,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
                 name="confirmPassword"
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all outline-none"
                 placeholder="Confirm your password"
               />

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit2, Trash2, GripVertical, FolderOpen } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
 interface Category {
@@ -24,50 +24,45 @@ export default function BlogCategoriesPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const fetchCategories = async () => {
-    const supabase = createClient()
+    try {
+      const pb = createClient()
 
-    // Fetch categories filtered by product
-    let catQuery = supabase
-      .from('blog_categories')
-      .select('*')
-      .order('sort_order')
+      // Fetch categories filtered by product
+      const catFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
 
-    if (selectedProduct && selectedProduct !== 'hub') {
-      catQuery = catQuery.eq('product_id', selectedProduct)
+      const cats = await pb.collection('blog_categories').getFullList({
+        filter: catFilter,
+        sort: 'sort_order',
+      })
+
+      // Get post counts filtered by product
+      const postFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
+
+      const posts = await pb.collection('blog_posts').getFullList({
+        filter: postFilter,
+        fields: 'category_id',
+      })
+
+      const postCounts = posts.reduce((acc: Record<string, number>, post: any) => {
+        if (post.category_id) {
+          acc[post.category_id] = (acc[post.category_id] || 0) + 1
+        }
+        return acc
+      }, {} as Record<string, number>)
+
+      setCategories(
+        cats.map((cat: any) => ({
+          ...cat,
+          post_count: postCounts[cat.id] || 0,
+        }))
+      )
+    } catch (e: any) {
+      console.error('Error fetching categories:', e)
     }
-
-    const { data: cats, error: catError } = await catQuery
-
-    if (catError) {
-      console.error('Error fetching categories:', catError)
-      setLoading(false)
-      return
-    }
-
-    // Get post counts filtered by product
-    let postQuery = supabase
-      .from('blog_posts')
-      .select('category_id')
-
-    if (selectedProduct && selectedProduct !== 'hub') {
-      postQuery = postQuery.eq('product_id', selectedProduct)
-    }
-
-    const { data: posts } = await postQuery
-
-    const postCounts = (posts || []).reduce((acc, post) => {
-      if (post.category_id) {
-        acc[post.category_id] = (acc[post.category_id] || 0) + 1
-      }
-      return acc
-    }, {} as Record<string, number>)
-
-    setCategories(
-      (cats || []).map((cat) => ({
-        ...cat,
-        post_count: postCounts[cat.id] || 0,
-      }))
-    )
     setLoading(false)
   }
 
@@ -86,17 +81,12 @@ export default function BlogCategoriesPage() {
     if (!confirm('Are you sure you want to delete this category?')) return
 
     setDeleting(id)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from('blog_categories')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      alert('Error deleting category: ' + error.message)
-    } else {
+    try {
+      const pb = createClient()
+      await pb.collection('blog_categories').delete(id)
       setCategories((prev) => prev.filter((c) => c.id !== id))
+    } catch (e: any) {
+      alert('Error deleting category: ' + (e.message || 'Unknown error'))
     }
     setDeleting(null)
   }
@@ -120,12 +110,9 @@ export default function BlogCategoriesPage() {
     setCategories(updated)
 
     // Save to database
-    const supabase = createClient()
+    const pb = createClient()
     for (const cat of updated) {
-      await supabase
-        .from('blog_categories')
-        .update({ sort_order: cat.sort_order })
-        .eq('id', cat.id)
+      await pb.collection('blog_categories').update(cat.id, { sort_order: cat.sort_order })
     }
   }
 

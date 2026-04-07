@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 
 export default function EditCategoryPage() {
@@ -28,28 +28,21 @@ export default function EditCategoryPage() {
   useEffect(() => {
     async function fetchCategory() {
       try {
-        const supabase = createClient()
-        const { data, error: fetchError } = await supabase
-          .from('doc_categories')
-          .select('*')
-          .eq('id', categoryId)
-          .single()
-
-        if (fetchError) throw fetchError
+        const pb = createClient()
+        const data = await pb.collection('doc_categories').getOne(categoryId)
 
         // Fetch parents filtered by the category's product
-        let parentQuery = supabase
-          .from('doc_parents')
-          .select('id, title')
-          .eq('is_active', true)
-          .order('sort_order')
-
+        const parentFilters: string[] = ['is_active = true']
         if (data.product_id) {
-          parentQuery = parentQuery.eq('product_id', data.product_id)
+          parentFilters.push(`product_id = "${data.product_id}"`)
         }
 
-        const { data: parentsData } = await parentQuery
-        if (parentsData) setParents(parentsData)
+        const parentsData = await pb.collection('doc_parents').getFullList({
+          filter: parentFilters.join(' && '),
+          sort: 'sort_order',
+          fields: 'id,title',
+        })
+        if (parentsData) setParents(parentsData as unknown as {id: string, title: string}[])
 
         setFormData({
           title: data.title || '',
@@ -74,21 +67,15 @@ export default function EditCategoryPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
-      const { error: updateError } = await supabase
-        .from('doc_categories')
-        .update({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description || null,
-          is_active: formData.is_active,
-          parent_id: formData.parent_id || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', categoryId)
-
-      if (updateError) throw updateError
+      await pb.collection('doc_categories').update(categoryId, {
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description || null,
+        is_active: formData.is_active,
+        parent_id: formData.parent_id || null,
+      })
 
       // Revalidate support pages to reflect category changes in navigation
       await revalidateSupportPages({ type: 'category' })

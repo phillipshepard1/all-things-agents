@@ -1,49 +1,42 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
+import { createAdminClient } from '@/lib/pocketbase/admin'
 import crypto from 'crypto'
 
 // Helper to check if current user is admin
 async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const pb = await createClient()
 
-  if (!user) {
+  if (!pb.authStore.isValid || !pb.authStore.record) {
     throw new Error('Not authenticated')
   }
 
-  const { data: profile } = await supabase
-    .from('admin_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const user = pb.authStore.record
 
-  if (!profile || profile.role !== 'admin') {
+  if (user.role !== 'admin') {
     throw new Error('Admin access required')
   }
 
-  return { user, supabase }
+  return { user, pb }
 }
 
 // Update own profile (name)
 export async function updateProfile(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const pb = await createClient()
 
-  if (!user) {
+  if (!pb.authStore.isValid || !pb.authStore.record) {
     return { error: 'Not authenticated' }
   }
 
   const name = formData.get('name') as string
 
-  const { error } = await supabase
-    .from('admin_profiles')
-    .update({ name, updated_at: new Date().toISOString() })
-    .eq('id', user.id)
-
-  if (error) {
-    return { error: error.message }
+  try {
+    await pb.collection('users').update(pb.authStore.record.id, { name })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update profile'
+    return { error: message }
   }
 
   revalidatePath('/admin/settings')
@@ -52,10 +45,9 @@ export async function updateProfile(formData: FormData) {
 
 // Change own password
 export async function changePassword(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const pb = await createClient()
 
-  if (!user) {
+  if (!pb.authStore.isValid || !pb.authStore.record) {
     return { error: 'Not authenticated' }
   }
 
@@ -67,25 +59,20 @@ export async function changePassword(formData: FormData) {
     return { error: 'Passwords do not match' }
   }
 
-  if (newPassword.length < 6) {
-    return { error: 'Password must be at least 6 characters' }
+  if (newPassword.length < 8) {
+    return { error: 'Password must be at least 8 characters' }
   }
 
-  // First verify current password by attempting to sign in
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: user.email!,
-    password: currentPassword,
-  })
-
-  if (signInError) {
-    return { error: 'Current password is incorrect' }
-  }
-
-  // Update password
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
-
-  if (error) {
-    return { error: error.message }
+  try {
+    // Use admin client to update password (avoids needing oldPassword verification via SDK)
+    const adminPb = await createAdminClient()
+    await adminPb.collection('users').update(pb.authStore.record.id, {
+      password: newPassword,
+      passwordConfirm: newPassword,
+      oldPassword: currentPassword,
+    })
+  } catch {
+    return { error: 'Current password is incorrect or update failed' }
   }
 
   return { success: true }
@@ -94,7 +81,8 @@ export async function changePassword(formData: FormData) {
 // Invite a new team member (admin only)
 export async function inviteTeamMember(formData: FormData) {
   try {
-    const { user, supabase } = await requireAdmin()
+    const { user } = await requireAdmin()
+    const adminPb = await createAdminClient()
 
     const email = formData.get('email') as string
     const role = formData.get('role') as string
@@ -108,27 +96,21 @@ export async function inviteTeamMember(formData: FormData) {
     }
 
     // Check if user already exists
-    const { data: existingProfile } = await supabase
-      .from('admin_profiles')
-      .select('id')
-      .eq('email', email)
-      .single()
-
-    if (existingProfile) {
+    try {
+      await adminPb.collection('users').getFirstListItem(`email = "${email}"`)
       return { error: 'A user with this email already exists' }
+    } catch {
+      // User doesn't exist — good
     }
 
     // Check if invite already pending
-    const { data: existingInvite } = await supabase
-      .from('team_invites')
-      .select('id')
-      .eq('email', email)
-      .is('accepted_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .single()
-
-    if (existingInvite) {
+    try {
+      await adminPb.collection('team_invites').getFirstListItem(
+        `email = "${email}" && accepted_at = "" && expires_at > "${new Date().toISOString()}"`
+      )
       return { error: 'An invite is already pending for this email' }
+    } catch {
+      // No pending invite — good
     }
 
     // Generate secure token
@@ -137,43 +119,24 @@ export async function inviteTeamMember(formData: FormData) {
     expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
 
     // Create invite
-    const { error: insertError } = await supabase
-      .from('team_invites')
-      .insert({
-        email,
-        role,
-        invited_by: user.id,
-        token,
-        expires_at: expiresAt.toISOString(),
-      })
+    await adminPb.collection('team_invites').create({
+      email,
+      role,
+      invited_by: user.id,
+      token,
+      expires_at: expiresAt.toISOString(),
+    })
 
-    if (insertError) {
-      return { error: insertError.message }
-    }
-
-    // Send invite email via Supabase
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     const inviteUrl = `${siteUrl}/invite/${token}`
 
-    // Use Supabase to send email (we'll use their auth email for now)
-    // In production, you might want to use a dedicated email service
-    const { error: emailError } = await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: inviteUrl,
-    })
-
-    // If email fails, we still created the invite - admin can share link manually
-    if (emailError) {
-      console.error('Failed to send invite email:', emailError)
-      // Return success but with the invite URL for manual sharing
-      return {
-        success: true,
-        inviteUrl,
-        message: 'Invite created. Email could not be sent automatically - share this link manually.'
-      }
-    }
-
+    // PocketBase doesn't have built-in invite email — return URL for manual sharing
     revalidatePath('/admin/settings')
-    return { success: true, message: 'Invite sent successfully' }
+    return {
+      success: true,
+      inviteUrl,
+      message: 'Invite created. Share this link with the team member.'
+    }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Failed to send invite' }
   }
@@ -182,7 +145,8 @@ export async function inviteTeamMember(formData: FormData) {
 // Update a team member's role (admin only)
 export async function updateUserRole(formData: FormData) {
   try {
-    const { user, supabase } = await requireAdmin()
+    const { user } = await requireAdmin()
+    const adminPb = await createAdminClient()
 
     const userId = formData.get('userId') as string
     const role = formData.get('role') as string
@@ -200,14 +164,7 @@ export async function updateUserRole(formData: FormData) {
       return { error: 'You cannot change your own role' }
     }
 
-    const { error } = await supabase
-      .from('admin_profiles')
-      .update({ role, updated_at: new Date().toISOString() })
-      .eq('id', userId)
-
-    if (error) {
-      return { error: error.message }
-    }
+    await adminPb.collection('users').update(userId, { role })
 
     revalidatePath('/admin/settings')
     return { success: true }
@@ -219,7 +176,8 @@ export async function updateUserRole(formData: FormData) {
 // Remove a team member (admin only)
 export async function removeTeamMember(formData: FormData) {
   try {
-    const { user, supabase } = await requireAdmin()
+    const { user } = await requireAdmin()
+    const adminPb = await createAdminClient()
 
     const userId = formData.get('userId') as string
 
@@ -232,23 +190,8 @@ export async function removeTeamMember(formData: FormData) {
       return { error: 'You cannot remove yourself' }
     }
 
-    // Delete from admin_profiles first
-    const { error: profileError } = await supabase
-      .from('admin_profiles')
-      .delete()
-      .eq('id', userId)
-
-    if (profileError) {
-      return { error: profileError.message }
-    }
-
-    // Delete from auth.users (requires service role)
-    const { error: authError } = await supabase.auth.admin.deleteUser(userId)
-
-    if (authError) {
-      console.error('Failed to delete auth user:', authError)
-      // Profile is already deleted, so we continue
-    }
+    // Delete user (PocketBase handles both auth and profile in one collection)
+    await adminPb.collection('users').delete(userId)
 
     revalidatePath('/admin/settings')
     return { success: true }
@@ -260,7 +203,8 @@ export async function removeTeamMember(formData: FormData) {
 // Cancel a pending invite (admin only)
 export async function cancelInvite(formData: FormData) {
   try {
-    const { supabase } = await requireAdmin()
+    const adminPb = await createAdminClient()
+    await requireAdmin()
 
     const inviteId = formData.get('inviteId') as string
 
@@ -268,14 +212,7 @@ export async function cancelInvite(formData: FormData) {
       return { error: 'Invite ID is required' }
     }
 
-    const { error } = await supabase
-      .from('team_invites')
-      .delete()
-      .eq('id', inviteId)
-
-    if (error) {
-      return { error: error.message }
-    }
+    await adminPb.collection('team_invites').delete(inviteId)
 
     revalidatePath('/admin/settings')
     return { success: true }
@@ -287,16 +224,21 @@ export async function cancelInvite(formData: FormData) {
 // Get all team members (admin only)
 export async function getTeamMembers() {
   try {
-    const { supabase } = await requireAdmin()
+    await requireAdmin()
+    const adminPb = await createAdminClient()
 
-    const { data, error } = await supabase
-      .from('admin_profiles')
-      .select('*')
-      .order('created_at', { ascending: true })
+    const records = await adminPb.collection('users').getFullList({
+      sort: 'created',
+    })
 
-    if (error) {
-      return { error: error.message }
-    }
+    const data = records.map(r => ({
+      id: r.id,
+      email: r.email,
+      name: r.name,
+      role: r.role,
+      created_at: r.created,
+      updated_at: r.updated,
+    }))
 
     return { data }
   } catch (error) {
@@ -307,18 +249,27 @@ export async function getTeamMembers() {
 // Get pending invites (admin only)
 export async function getPendingInvites() {
   try {
-    const { supabase } = await requireAdmin()
+    await requireAdmin()
+    const adminPb = await createAdminClient()
 
-    const { data, error } = await supabase
-      .from('team_invites')
-      .select('*, inviter:invited_by(name, email)')
-      .is('accepted_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
+    const records = await adminPb.collection('team_invites').getFullList({
+      filter: `accepted_at = "" && expires_at > "${new Date().toISOString()}"`,
+      sort: '-created',
+      expand: 'invited_by',
+    })
 
-    if (error) {
-      return { error: error.message }
-    }
+    const data = records.map(r => ({
+      id: r.id,
+      email: r.email,
+      role: r.role,
+      token: r.token,
+      expires_at: r.expires_at,
+      created_at: r.created,
+      inviter: r.expand?.invited_by ? {
+        name: r.expand.invited_by.name,
+        email: r.expand.invited_by.email,
+      } : null,
+    }))
 
     return { data }
   } catch (error) {

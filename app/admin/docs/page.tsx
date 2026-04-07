@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, FileText, Pencil, Eye } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { useAdminProduct } from '@/lib/products/admin-context'
 import { products, type ProductId } from '@/lib/products/config'
 
@@ -58,46 +58,37 @@ export default function AdminDocsPage() {
   const fetchData = async () => {
     setLoading(true)
     setError(null)
-    const supabase = createClient()
+    const pb = createClient()
 
     try {
       // Fetch parents
-      let parentQuery = supabase
-        .from('doc_parents')
-        .select('id, title, slug, sort_order')
-        .order('sort_order')
-
-      if (selectedProduct && selectedProduct !== 'hub') {
-        parentQuery = parentQuery.eq('product_id', selectedProduct)
-      }
-
-      const { data: parentsData, error: parentsError } = await parentQuery
-      if (parentsError) throw parentsError
+      const parentFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
+      const parentsData = await pb.collection('doc_parents').getFullList({
+        filter: parentFilter,
+        sort: 'sort_order',
+        fields: 'id,title,slug,sort_order',
+      })
 
       // Fetch categories
-      const { data: catsData, error: catsError } = await supabase
-        .from('doc_categories')
-        .select('id, slug, title, description, sort_order, parent_id')
-        .order('sort_order')
-      if (catsError) throw catsError
+      const catsData = await pb.collection('doc_categories').getFullList({
+        sort: 'sort_order',
+        fields: 'id,slug,title,description,sort_order,parent_id',
+      })
 
       // Fetch docs
-      let docsQuery = supabase
-        .from('support_docs')
-        .select('*')
-        .order('category')
-        .order('sort_order')
+      const docsFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
+      const docsData = await pb.collection('support_docs').getFullList({
+        filter: docsFilter,
+        sort: 'category,sort_order',
+      })
 
-      if (selectedProduct && selectedProduct !== 'hub') {
-        docsQuery = docsQuery.eq('product_id', selectedProduct)
-      }
-
-      const { data: docsData, error: docsError } = await docsQuery
-      if (docsError) throw docsError
-
-      setParents(parentsData || [])
-      setCategories(catsData || [])
-      setDocs(docsData || [])
+      setParents((parentsData || []) as unknown as Parent[])
+      setCategories((catsData || []) as unknown as Category[])
+      setDocs((docsData || []) as unknown as Doc[])
 
       // Default to first parent tab
       if (parentsData && parentsData.length > 0 && !activeParentId) {
@@ -238,7 +229,7 @@ export default function AdminDocsPage() {
           <h3 className="text-sm font-medium text-red-800">Error loading documents</h3>
           <p className="mt-1 text-sm text-red-700">{error}</p>
           <p className="mt-2 text-sm text-red-600">
-            Make sure the <code className="bg-red-100 px-1 rounded">support_docs</code> table exists in your Supabase database.
+            Make sure the <code className="bg-red-100 px-1 rounded">support_docs</code> collection exists in your PocketBase database.
           </p>
         </div>
       )}

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
@@ -49,32 +49,26 @@ export default function NewParentPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
       // Get max sort_order for this product
-      let orderQuery = supabase
-        .from('doc_parents')
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1)
+      const orderFilter = selectedProduct
+        ? `product_id = "${selectedProduct}"`
+        : ''
 
-      if (selectedProduct) {
-        orderQuery = orderQuery.eq('product_id', selectedProduct)
-      }
-
-      const { data: existing } = await orderQuery
+      const existing = await pb.collection('doc_parents').getFullList({
+        filter: orderFilter,
+        sort: '-sort_order',
+        fields: 'sort_order',
+      })
 
       const nextOrder = (existing?.[0]?.sort_order || 0) + 1
 
-      const { error: insertError } = await supabase
-        .from('doc_parents')
-        .insert({
-          ...formData,
-          sort_order: nextOrder,
-          product_id: selectedProduct,
-        })
-
-      if (insertError) throw insertError
+      await pb.collection('doc_parents').create({
+        ...formData,
+        sort_order: nextOrder,
+        product_id: selectedProduct,
+      })
 
       // Revalidate support pages to reflect new parent in navigation
       await revalidateSupportPages({ type: 'category' })

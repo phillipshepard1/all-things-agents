@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Eye, Edit3 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { NovelEditor } from '@/components/admin/editor/novel-editor'
 import type { GuideImportResult } from '@/lib/editor/guide-markdown-parser'
 import { VideoUpload } from '@/components/admin/editor/video-upload'
@@ -51,20 +51,20 @@ export default function NewDocPage() {
   // Fetch parents filtered by product
   useEffect(() => {
     async function fetchParents() {
-      const supabase = createClient()
-      let query = supabase
-        .from('doc_parents')
-        .select('id, title, slug')
-        .eq('is_active', true)
-        .order('sort_order')
-
+      const pb = createClient()
+      const filters: string[] = ['is_active = true']
       if (selectedProduct && selectedProduct !== 'hub') {
-        query = query.eq('product_id', selectedProduct)
+        filters.push(`product_id = "${selectedProduct}"`)
       }
 
-      const { data } = await query
+      const data = await pb.collection('doc_parents').getFullList({
+        filter: filters.join(' && '),
+        sort: 'sort_order',
+        fields: 'id,title,slug',
+      })
+
       if (data) {
-        setParents(data)
+        setParents(data as unknown as Parent[])
         // Default to "General" parent
         const generalParent = data.find((p) => p.title === 'General')
         if (generalParent) {
@@ -79,23 +79,23 @@ export default function NewDocPage() {
 
   // Fetch categories filtered by parent
   async function fetchCategoriesForParent(parentId: string) {
-    const supabase = createClient()
-    let query = supabase
-      .from('doc_categories')
-      .select('id, slug, title')
-      .eq('is_active', true)
-      .order('sort_order')
+    const pb = createClient()
+    const filters: string[] = ['is_active = true']
 
     if (selectedProduct && selectedProduct !== 'hub') {
-      query = query.eq('product_id', selectedProduct)
+      filters.push(`product_id = "${selectedProduct}"`)
     }
 
     if (parentId) {
-      query = query.eq('parent_id', parentId)
+      filters.push(`parent_id = "${parentId}"`)
     }
 
-    const { data } = await query
-    setCategories(data || [])
+    const data = await pb.collection('doc_categories').getFullList({
+      filter: filters.join(' && '),
+      sort: 'sort_order',
+      fields: 'id,slug,title',
+    })
+    setCategories((data || []) as unknown as Category[])
   }
 
   // Handle parent change
@@ -149,31 +149,27 @@ export default function NewDocPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = pb.authStore.record
 
       // Find category slug for backwards compat
       const selectedCat = categories.find(c => c.id === formData.category_id)
 
-      const { error: insertError } = await supabase
-        .from('support_docs')
-        .insert({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description,
-          category_id: formData.category_id || null,
-          category: selectedCat?.slug || null,
-          video_url: formData.video_url || null,
-          video_position: formData.video_url ? formData.video_position : null,
-          status: formData.status,
-          content,
-          published_at: formData.status === 'scheduled' ? formData.published_at : null,
-          author_id: user?.id,
-          product_id: selectedProduct,
-        })
-
-      if (insertError) throw insertError
+      await pb.collection('support_docs').create({
+        title: formData.title,
+        slug: formData.slug,
+        description: formData.description,
+        category_id: formData.category_id || null,
+        category: selectedCat?.slug || null,
+        video_url: formData.video_url || null,
+        video_position: formData.video_url ? formData.video_position : null,
+        status: formData.status,
+        content,
+        published_at: formData.status === 'scheduled' ? formData.published_at : null,
+        author_id: user?.id,
+        product_id: selectedProduct,
+      })
 
       // Revalidate support pages to reflect new content
       await revalidateSupportPages({ type: 'doc' })

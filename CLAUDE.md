@@ -12,7 +12,7 @@ All Things Agents is a Next.js 16 monorepo containing the main hub site and mult
 - **React:** 19.2.3
 - **Styling:** Tailwind CSS 4
 - **Animation:** Motion (Framer Motion)
-- **Database:** Supabase
+- **Database:** PocketBase (self-hosted on Hetzner VPS)
 - **Docs:** Fumadocs (MDX-based documentation)
 - **Rich Text:** TipTap editor
 - **UI Components:** Radix UI primitives
@@ -111,17 +111,19 @@ public/                       # Static assets
 
 ### Styling & Config
 - `app/globals.css` - Global styles and Tailwind config
-- `lib/supabase/` - Supabase client configuration
+- `lib/pocketbase/` - PocketBase client configuration (client, server, admin)
 
 ## Environment Variables
 
 Required in `.env.local`:
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (for admin)
+- `NEXT_PUBLIC_POCKETBASE_URL` - PocketBase instance URL
+- `POCKETBASE_ADMIN_EMAIL` - PocketBase admin email (for server-side operations)
+- `POCKETBASE_ADMIN_PASSWORD` - PocketBase admin password
 
 Optional:
 - `NEXT_PUBLIC_SITE_URL` - Site URL for metadata (default: https://allthingsagents.com)
+- `MUX_TOKEN_ID` - Mux video token ID
+- `MUX_TOKEN_SECRET` - Mux video token secret
 
 ## Deployment
 

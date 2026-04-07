@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { TiptapContent } from '@/components/support/tiptap-content'
@@ -12,46 +12,70 @@ export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const supabase = await createClient()
+  const pb = await createClient()
 
-  const { data: post } = await supabase
-    .from('blog_posts')
-    .select('title, excerpt, featured_image, meta_description, og_image')
-    .eq('slug', params.slug)
-    .eq('status', 'published')
-    .single()
+  try {
+    const post = await pb.collection('blog_posts').getFirstListItem(
+      `slug = "${params.slug}" && status = "published"`,
+      { fields: 'title,excerpt,featured_image,meta_description,og_image' }
+    )
 
-  if (!post) {
+    const description = post.meta_description || post.excerpt || `Read ${post.title} on the Client Keeper blog.`
+    const ogImage = post.og_image || post.featured_image
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clientkeeper.io'
+
+    return {
+      title: `${post.title} | Client Keeper Blog`,
+      description,
+      alternates: {
+        canonical: `${baseUrl}/blog/${params.slug}`,
+      },
+      openGraph: {
+        title: post.title,
+        description,
+        url: `${baseUrl}/blog/${params.slug}`,
+        siteName: 'Client Keeper',
+        type: 'article',
+        images: ogImage ? [{ url: ogImage, width: 1200, height: 630, alt: post.title }] : undefined,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: post.title,
+        description,
+        images: ogImage ? [ogImage] : undefined,
+      },
+    }
+  } catch {
     return {
       title: 'Post Not Found | Client Keeper Blog',
     }
   }
+}
 
-  const description = post.meta_description || post.excerpt || `Read ${post.title} on the Client Keeper blog.`
-  const ogImage = post.og_image || post.featured_image
+interface Category {
+  id: string
+  slug: string
+  title: string
+  icon: string | null
+}
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clientkeeper.io'
-
-  return {
-    title: `${post.title} | Client Keeper Blog`,
-    description,
-    alternates: {
-      canonical: `${baseUrl}/blog/${params.slug}`,
-    },
-    openGraph: {
-      title: post.title,
-      description,
-      url: `${baseUrl}/blog/${params.slug}`,
-      siteName: 'Client Keeper',
-      type: 'article',
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630, alt: post.title }] : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.title,
-      description,
-      images: ogImage ? [ogImage] : undefined,
-    },
+interface BlogPost {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  featured_image: string | null
+  og_image: string | null
+  meta_description: string | null
+  content: string
+  tags: string[] | null
+  published_at: string | null
+  created: string
+  updated: string
+  category_id: string | null
+  expand?: {
+    category_id?: Category
   }
 }
 
@@ -59,28 +83,19 @@ export default async function BlogPostPage(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const supabase = await createClient()
+  const pb = await createClient()
 
-  const { data: post } = await supabase
-    .from('blog_posts')
-    .select(`
-      *,
-      blog_categories (
-        id,
-        slug,
-        title,
-        icon
-      )
-    `)
-    .eq('slug', params.slug)
-    .eq('status', 'published')
-    .single()
-
-  if (!post) {
+  let post: BlogPost
+  try {
+    post = await pb.collection('blog_posts').getFirstListItem<BlogPost>(
+      `slug = "${params.slug}" && status = "published"`,
+      { expand: 'category_id' }
+    )
+  } catch {
     notFound()
   }
 
-  const category = post.blog_categories as { id: string; slug: string; title: string; icon: string | null } | null
+  const category = post.expand?.category_id || null
 
   // Parse content from JSON string
   let parsedContent = null
@@ -120,8 +135,8 @@ export default async function BlogPostPage(props: {
     description: post.excerpt || post.meta_description || `Read ${post.title} on the Client Keeper blog.`,
     url: postUrl,
     image: post.featured_image || post.og_image || `${baseUrl}/og/client-keeper.png`,
-    datePublished: post.published_at || post.created_at,
-    dateModified: post.updated_at,
+    datePublished: post.published_at || post.created,
+    dateModified: post.updated,
     authorName: 'Client Keeper Team',
   })
 

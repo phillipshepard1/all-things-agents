@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Trash2, Eye, Edit3, X, Plus, Calendar } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { NovelEditor } from '@/components/admin/editor/novel-editor'
 import { TiptapContent } from '@/components/support/tiptap-content'
 import { ImageUpload } from '@/components/admin/editor/image-upload'
@@ -52,21 +52,17 @@ export default function EditBlogPostPage() {
     const fetchCategories = async () => {
       if (!postProductId) return
 
-      const supabase = createClient()
-      let query = supabase
-        .from('blog_categories')
-        .select('id, slug, title')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true })
+      try {
+        const pb = createClient()
+        const filter = `is_active = true && product_id = "${postProductId}"`
 
-      // Filter categories by the post's product_id
-      if (postProductId) {
-        query = query.eq('product_id', postProductId)
-      }
-
-      const { data } = await query
-      if (data) {
-        setCategories(data)
+        const data = await pb.collection('blog_categories').getFullList({
+          filter,
+          sort: 'sort_order',
+        })
+        setCategories(data as any)
+      } catch {
+        // Silently fail — categories dropdown will be empty
       }
     }
     fetchCategories()
@@ -76,15 +72,9 @@ export default function EditBlogPostPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const supabase = createClient()
+        const pb = createClient()
 
-        const { data, error: fetchError } = await supabase
-          .from('blog_posts')
-          .select('*')
-          .eq('id', postId)
-          .single()
-
-        if (fetchError) throw fetchError
+        const data = await pb.collection('blog_posts').getOne(postId)
 
         // Store the post's product_id for category filtering
         setPostProductId(data.product_id || null)
@@ -162,7 +152,7 @@ export default function EditBlogPostPage() {
     setError(null)
 
     try {
-      const supabase = createClient()
+      const pb = createClient()
 
       // Serialize content to JSON string for storage
       const contentString = content ? JSON.stringify(content) : ''
@@ -177,26 +167,20 @@ export default function EditBlogPostPage() {
         scheduled_for = new Date(formData.scheduled_for).toISOString()
       }
 
-      const { error: updateError } = await supabase
-        .from('blog_posts')
-        .update({
-          title: formData.title,
-          slug: formData.slug,
-          excerpt: formData.excerpt || null,
-          featured_image: formData.featured_image || null,
-          status: formData.status,
-          content: contentString,
-          tags: formData.tags,
-          published_at,
-          scheduled_for,
-          category_id: formData.category_id || null,
-          meta_description: formData.meta_description || null,
-          og_image: formData.og_image || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', postId)
-
-      if (updateError) throw updateError
+      await pb.collection('blog_posts').update(postId, {
+        title: formData.title,
+        slug: formData.slug,
+        excerpt: formData.excerpt || null,
+        featured_image: formData.featured_image || null,
+        status: formData.status,
+        content: contentString,
+        tags: formData.tags,
+        published_at,
+        scheduled_for,
+        category_id: formData.category_id || null,
+        meta_description: formData.meta_description || null,
+        og_image: formData.og_image || null,
+      })
 
       router.push('/admin/blog')
     } catch (e: any) {
@@ -212,13 +196,8 @@ export default function EditBlogPostPage() {
 
     setDeleting(true)
     try {
-      const supabase = createClient()
-      const { error: deleteError } = await supabase
-        .from('blog_posts')
-        .delete()
-        .eq('id', postId)
-
-      if (deleteError) throw deleteError
+      const pb = createClient()
+      await pb.collection('blog_posts').delete(postId)
 
       router.push('/admin/blog')
     } catch (e: any) {

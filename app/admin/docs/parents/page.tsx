@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit2, Trash2, GripVertical, FileText } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/pocketbase/client'
 import { revalidateSupportPages } from '@/lib/cms/revalidate'
 import { useAdminProduct } from '@/lib/products/admin-context'
 
@@ -24,50 +24,50 @@ export default function ParentsPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const fetchParents = async () => {
-    const supabase = createClient()
+    const pb = createClient()
 
-    // Fetch parents filtered by product
-    let parentQuery = supabase
-      .from('doc_parents')
-      .select('*')
-      .order('sort_order')
+    try {
+      // Fetch parents filtered by product
+      const parentFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
 
-    if (selectedProduct && selectedProduct !== 'hub') {
-      parentQuery = parentQuery.eq('product_id', selectedProduct)
+      const parentData = await pb.collection('doc_parents').getFullList({
+        filter: parentFilter,
+        sort: 'sort_order',
+      })
+
+      // Get category counts per parent filtered by product
+      const catFilter = selectedProduct && selectedProduct !== 'hub'
+        ? `product_id = "${selectedProduct}"`
+        : ''
+
+      const cats = await pb.collection('doc_categories').getFullList({
+        filter: catFilter,
+        fields: 'parent_id',
+      })
+
+      const categoryCounts = (cats || []).reduce((acc, cat) => {
+        if (cat.parent_id) {
+          acc[cat.parent_id] = (acc[cat.parent_id] || 0) + 1
+        }
+        return acc
+      }, {} as Record<string, number>)
+
+      setParents(
+        (parentData || []).map((parent) => ({
+          id: parent.id,
+          slug: parent.slug,
+          title: parent.title,
+          description: parent.description || null,
+          sort_order: parent.sort_order || 0,
+          is_active: parent.is_active ?? true,
+          category_count: categoryCounts[parent.id] || 0,
+        }))
+      )
+    } catch (e) {
+      console.error('Error fetching parents:', e)
     }
-
-    const { data: parentData, error: parentError } = await parentQuery
-
-    if (parentError) {
-      console.error('Error fetching parents:', parentError)
-      setLoading(false)
-      return
-    }
-
-    // Get category counts per parent filtered by product
-    let catQuery = supabase
-      .from('doc_categories')
-      .select('parent_id')
-
-    if (selectedProduct && selectedProduct !== 'hub') {
-      catQuery = catQuery.eq('product_id', selectedProduct)
-    }
-
-    const { data: cats } = await catQuery
-
-    const categoryCounts = (cats || []).reduce((acc, cat) => {
-      if (cat.parent_id) {
-        acc[cat.parent_id] = (acc[cat.parent_id] || 0) + 1
-      }
-      return acc
-    }, {} as Record<string, number>)
-
-    setParents(
-      (parentData || []).map((parent) => ({
-        ...parent,
-        category_count: categoryCounts[parent.id] || 0,
-      }))
-    )
     setLoading(false)
   }
 
@@ -86,19 +86,15 @@ export default function ParentsPage() {
     if (!confirm('Are you sure you want to delete this parent?')) return
 
     setDeleting(id)
-    const supabase = createClient()
+    const pb = createClient()
 
-    const { error } = await supabase
-      .from('doc_parents')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      alert('Error deleting parent: ' + error.message)
-    } else {
+    try {
+      await pb.collection('doc_parents').delete(id)
       setParents((prev) => prev.filter((p) => p.id !== id))
       // Revalidate support pages to update navigation
       await revalidateSupportPages({ type: 'category' })
+    } catch (error: any) {
+      alert('Error deleting parent: ' + (error.message || 'Unknown error'))
     }
     setDeleting(null)
   }
@@ -122,13 +118,10 @@ export default function ParentsPage() {
     setParents(updated)
 
     // Save to database
-    const supabase = createClient()
+    const pb = createClient()
     await Promise.all(
       updated.map((parent) =>
-        supabase
-          .from('doc_parents')
-          .update({ sort_order: parent.sort_order })
-          .eq('id', parent.id)
+        pb.collection('doc_parents').update(parent.id, { sort_order: parent.sort_order })
       )
     )
 

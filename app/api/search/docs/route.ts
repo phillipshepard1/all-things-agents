@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 
 interface SearchResult {
   category: string
@@ -20,45 +20,55 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const supabase = await createClient()
+  const pb = await createClient()
 
-  const { data, error } = await supabase
-    .rpc('search_support_docs', { search_query: q })
+  try {
+    // Escape double quotes in query for PocketBase filter
+    const safeQ = q.replace(/"/g, '\\"')
 
-  if (error) {
-    console.error('Search error:', error)
-    return NextResponse.json({ error: 'Search failed' }, { status: 500 })
-  }
+    const results = await pb.collection('support_docs').getFullList({
+      filter: `status = "published" && slug != "index" && (title ~ "${safeQ}" || description ~ "${safeQ}" || search_text ~ "${safeQ}")`,
+      expand: 'category_id,category_id.parent_id',
+    })
 
-  // Group results by category + parent so same-named categories under different parents stay separate
-  const groupMap = new Map<string, SearchResult>()
+    // Group results by category + parent so same-named categories under different parents stay separate
+    const groupMap = new Map<string, SearchResult>()
 
-  for (const doc of data || []) {
-    const categoryTitle = doc.category_title || 'Uncategorized'
-    const parentTitle = doc.parent_title || ''
-    const groupKey = `${categoryTitle}|${doc.parent_slug}`
-    const displayCategory = parentTitle
-      ? `${categoryTitle} — ${parentTitle}`
-      : categoryTitle
+    for (const doc of results) {
+      const category = doc.expand?.category_id
+      const parent = category?.expand?.parent_id
 
-    if (!groupMap.has(groupKey)) {
-      groupMap.set(groupKey, {
-        category: displayCategory,
-        categoryName: categoryTitle,
-        parentName: parentTitle,
-        items: [],
+      const categoryTitle = category?.title || 'Uncategorized'
+      const parentTitle = parent?.title || ''
+      const categorySlug = category?.slug || ''
+      const parentSlug = parent?.slug || ''
+      const groupKey = `${categoryTitle}|${parentSlug}`
+      const displayCategory = parentTitle
+        ? `${categoryTitle} — ${parentTitle}`
+        : categoryTitle
+
+      if (!groupMap.has(groupKey)) {
+        groupMap.set(groupKey, {
+          category: displayCategory,
+          categoryName: categoryTitle,
+          parentName: parentTitle,
+          items: [],
+        })
+      }
+
+      groupMap.get(groupKey)!.items.push({
+        id: doc.id,
+        title: doc.title,
+        description: doc.description,
+        url: `/client-keeper-crm/support/${parentSlug}/${categorySlug}/${doc.slug}`,
       })
     }
 
-    groupMap.get(groupKey)!.items.push({
-      id: doc.id,
-      title: doc.title,
-      description: doc.description,
-      url: `/client-keeper-crm/support/${doc.parent_slug}/${doc.category_slug}/${doc.slug}`,
-    })
+    const grouped = Array.from(groupMap.values())
+
+    return NextResponse.json({ results: grouped })
+  } catch (error) {
+    console.error('Search error:', error)
+    return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
-
-  const results = Array.from(groupMap.values())
-
-  return NextResponse.json({ results })
 }

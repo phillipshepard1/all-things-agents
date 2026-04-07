@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -6,11 +6,10 @@ const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const pb = await createClient()
 
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    if (!pb.authStore.isValid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -43,41 +42,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'png'
-    const timestamp = Date.now()
-    const randomId = Math.random().toString(36).substring(2, 10)
-    const fileName = `${timestamp}-${randomId}.${ext}`
-    const filePath = `uploads/${fileName}`
+    // Upload to PocketBase media collection
+    const pbFormData = new FormData()
+    pbFormData.append('file', file)
 
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const record = await pb.collection('media').create(pbFormData)
 
-    // Upload to Supabase Storage
-    const { data, error: uploadError } = await supabase.storage
-      .from('support-docs-media')
-      .upload(filePath, buffer, {
-        contentType: file.type,
-        upsert: false,
-      })
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError)
-      return NextResponse.json(
-        { error: 'Failed to upload file' },
-        { status: 500 }
-      )
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('support-docs-media')
-      .getPublicUrl(filePath)
+    // Get the file URL
+    const url = pb.files.getURL(record, record.file)
 
     return NextResponse.json({
-      url: urlData.publicUrl,
-      path: filePath,
+      url,
+      path: record.file,
       name: file.name,
       size: file.size,
       type: file.type,

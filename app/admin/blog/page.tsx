@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Plus, BookOpen, Pencil, Eye, Calendar } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/pocketbase/server'
 import { getAdminProduct } from '@/lib/products/server'
 import { products, type ProductId } from '@/lib/products/config'
 
@@ -13,7 +13,7 @@ function getProductBlogUrl(productId: string | null, postSlug: string): string {
 }
 
 export default async function AdminBlogPage() {
-  const supabase = await createClient()
+  const pb = await createClient()
   const productId = await getAdminProduct()
 
   // Fetch blog posts filtered by product
@@ -21,20 +21,14 @@ export default async function AdminBlogPage() {
   let error: string | null = null
 
   try {
-    let query = supabase
-      .from('blog_posts')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const filter = productId && productId !== 'hub'
+      ? `product_id = "${productId}"`
+      : ''
 
-    // Filter by product unless viewing hub (all products)
-    if (productId && productId !== 'hub') {
-      query = query.eq('product_id', productId)
-    }
-
-    const { data, error: fetchError } = await query
-
-    if (fetchError) throw fetchError
-    posts = data || []
+    posts = await pb.collection('blog_posts').getFullList({
+      filter,
+      sort: '-created',
+    })
   } catch (e: any) {
     error = e.message || 'Failed to fetch blog posts'
   }
