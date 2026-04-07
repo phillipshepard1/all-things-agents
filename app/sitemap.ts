@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/lib/pocketbase/server";
+import { createPublicClient } from "@/lib/pocketbase/public";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://clientkeeper.io";
@@ -107,7 +107,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch dynamic blog posts
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
-    const pb = await createClient();
+    const pb = createPublicClient();
     const posts = await pb.collection("blog_posts").getFullList({
       filter: 'status = "published"',
       sort: "-published_at",
@@ -127,7 +127,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch blog categories
   let blogCategories: MetadataRoute.Sitemap = [];
   try {
-    const pb = await createClient();
+    const pb = createPublicClient();
     const categories = await pb.collection("blog_categories").getFullList({
       filter: "is_active = true",
       fields: "slug",

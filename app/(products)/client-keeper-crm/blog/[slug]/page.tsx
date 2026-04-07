@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react'
-import { createClient } from '@/lib/pocketbase/server'
+import { createPublicClient } from '@/lib/pocketbase/public'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { TiptapContent } from '@/components/support/tiptap-content'
@@ -12,7 +12,7 @@ export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   try {
     const post = await pb.collection('blog_posts').getFirstListItem(
@@ -83,7 +83,7 @@ export default async function BlogPostPage(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   let post: BlogPost
   try {

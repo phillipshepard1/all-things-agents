@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Calendar, Clock, ArrowRight, FolderOpen } from 'lucide-react'
-import { createClient } from '@/lib/pocketbase/server'
+import { createPublicClient } from '@/lib/pocketbase/public'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { JsonLd, generateCollectionPageSchema } from '@/components/seo/JsonLd'
@@ -61,7 +61,7 @@ interface BlogPost {
 }
 
 export default async function BlogPage() {
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   // Fetch posts with their categories
   let posts: BlogPost[] = []

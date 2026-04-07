@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Calendar, Clock, ArrowRight, ArrowLeft, FolderOpen } from 'lucide-react'
-import { createClient } from '@/lib/pocketbase/server'
+import { createPublicClient } from '@/lib/pocketbase/public'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { JsonLd, generateBreadcrumbSchema } from '@/components/seo/JsonLd'
@@ -13,7 +13,7 @@ export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   try {
     const category = await pb.collection('blog_categories').getFirstListItem(
@@ -71,7 +71,7 @@ export default async function BlogCategoryPage(props: {
   params: Promise<{ slug: string }>
 }) {
   const params = await props.params
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   // Fetch the category
   let category: Category

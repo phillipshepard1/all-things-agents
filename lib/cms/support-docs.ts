@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/pocketbase/server'
+import { createPublicClient } from '@/lib/pocketbase/public'
 import { createAdminClient } from '@/lib/pocketbase/admin'
 import type { JSONContent } from '@tiptap/core'
 
@@ -48,7 +48,7 @@ export interface DocParent {
  * Fetch all published docs grouped by parent → category → doc
  */
 export async function getPublishedDocs(): Promise<DocParent[]> {
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   try {
     // Fetch active parents
@@ -137,7 +137,7 @@ export async function getPublishedDocs(): Promise<DocParent[]> {
  * Handles 3-level hierarchy: /support/{parent}/{category}/{doc}
  */
 export async function getDocBySlug(slugPath: string[]): Promise<SupportDoc | null> {
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   try {
     // Handle root support page (no slug)
@@ -279,7 +279,7 @@ export async function getDocBySlug(slugPath: string[]): Promise<SupportDoc | nul
  * Get all categories (for admin)
  */
 export async function getAllCategories(): Promise<DocCategory[]> {
-  const pb = await createClient()
+  const pb = createPublicClient()
 
   try {
     const categories = await pb.collection('doc_categories').getFullList({
