@@ -22,7 +22,7 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Client Keeper · Atelier Edition",
   description:
-    "A CRM that feels like a magazine you actually want to read. Made for real estate agents who prefer craft over chaos.",
+    "Real Estate CRM Without the Tech Overwhelm. Meet MYRA — the AI assistant that handles data entry while you close deals.",
 };
 
 export default function AtelierPage() {
@@ -31,15 +31,19 @@ export default function AtelierPage() {
       className={`${playfair.variable} ${caveat.variable} ${dmSans.variable} relative min-h-screen bg-[#fbf6ee] text-[#2a1637]`}
       style={{ fontFamily: "var(--font-atelier-sans), system-ui, sans-serif" }}
     >
-      {/* subtle paper grain */}
       <PaperGrain />
       <Masthead />
       <Hero />
+      <UsedBy />
       <Strikethrough />
       <PullQuote />
       <FeatureSpread />
       <Myra />
+      <Benefits />
+      <DetailedFeatures />
+      <Testimonials />
       <Pricing />
+      <FAQ />
       <Sign />
     </main>
   );
@@ -85,14 +89,14 @@ function Masthead() {
         </span>
       </div>
       <nav className="hidden items-center gap-8 text-[13px] text-[#4a2b60]/80 md:flex">
-        <Link href="#features">The pages</Link>
-        <Link href="#myra">Myra</Link>
-        <Link href="#pricing">Price</Link>
+        <Link href="#features">Features</Link>
+        <Link href="#myra">MYRA</Link>
+        <Link href="#pricing">Pricing</Link>
         <a
           href="/client-keeper-crm"
           className="rounded-full bg-[#300092] px-5 py-2 text-white transition hover:bg-[#3d0d6a]"
         >
-          Try free
+          Start Free Trial
         </a>
       </nav>
     </header>
@@ -106,22 +110,23 @@ function Hero() {
         <p
           className="mb-5 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.32em] text-[#7a36dd]"
         >
-          <span className="h-[1px] w-8 bg-[#7a36dd]" /> Issue 01 · For the
-          agent who refuses to be hurried
+          <span className="h-[1px] w-8 bg-[#7a36dd]" /> Real Estate CRM ·
+          Without the Tech Overwhelm
         </p>
         <h1
           className="font-serif text-[clamp(3.2rem,8vw,6.5rem)] leading-[0.95] tracking-[-0.02em] text-[#2a1637]"
           style={{ fontFamily: "var(--font-atelier-serif)" }}
         >
           The CRM that{" "}
-          <em className="font-normal italic text-[#7a36dd]">remembers</em>
+          <em className="font-normal italic text-[#7a36dd]">makes</em>
           <br />
-          what you <em className="font-normal italic">meant</em> to do.
+          real estate <em className="font-normal italic">easy.</em>
         </h1>
         <p className="mt-8 max-w-lg text-lg leading-relaxed text-[#4a2b60]">
-          Client Keeper is a quiet, considered CRM for real estate agents who
-          treat their clients like long relationships, not line items. Talk
-          to it, and Myra — your AI assistant — writes it all down.
+          Client Keeper is simple to use, with zero learning curve. MYRA —
+          your AI assistant — handles data entry through voice and text, so
+          you stay organized, build better relationships, and close more
+          deals without the overwhelm.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-5">
@@ -129,7 +134,7 @@ function Hero() {
             href="/client-keeper-crm"
             className="group relative inline-flex items-center gap-3 rounded-full bg-[#300092] px-7 py-4 text-sm font-semibold text-white shadow-[0_14px_40px_-12px_rgba(48,0,146,0.5)] transition hover:-translate-y-0.5 hover:bg-[#3d0d6a]"
           >
-            Start the 30-day trial
+            Start Free Trial
             <span className="transition-transform group-hover:translate-x-1">→</span>
           </a>
           <span
@@ -141,7 +146,7 @@ function Hero() {
         </div>
 
         <p className="mt-6 text-[11px] uppercase tracking-[0.28em] text-[#4a2b60]/60">
-          $19/mo billed annually · cancel any time · iOS &amp; Android
+          30-day free trial · cancel anytime · iOS &amp; Android
         </p>
       </div>
 
@@ -151,23 +156,30 @@ function Hero() {
             The morning page
           </span>
           <div className="mt-4 space-y-3">
-            <Line text="Call Priscilla re: Maple Ridge closing" hand />
-            <Line text="Send Jim the warranty paperwork" checked hand />
+            <Line text="Call Sarah Johnson — next follow-up due" hand />
+            <Line text="Email sent to Mike · Oak Street" checked hand />
             <Line text="Birthday — Susan M." hand />
-            <Line text="Follow up: Cooper (first week in)" checked hand />
-            <Line text="Water the office plant (truly)" hand />
+            <Line text="Note added for Lisa (2nd showing)" checked hand />
+            <Line text="Check in with the Millers (6-mo)" hand />
           </div>
           <div
-            className="mt-6 border-t border-[#2a1637]/10 pt-3 text-right text-[22px] italic text-[#7a36dd]"
-            style={{ fontFamily: "var(--font-atelier-hand)" }}
+            className="mt-6 flex items-center justify-between border-t border-[#2a1637]/10 pt-3"
           >
-            — ck.
+            <span className="text-[11px] uppercase tracking-[0.25em] text-[#4a2b60]/70">
+              24 leads · 12 tasks · 5 closings
+            </span>
+            <span
+              className="text-[22px] italic text-[#7a36dd]"
+              style={{ fontFamily: "var(--font-atelier-hand)" }}
+            >
+              — myra
+            </span>
           </div>
         </div>
         <div
           className="absolute -bottom-8 -left-6 hidden rotate-[-4deg] rounded-sm bg-[#300092] px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-lg md:block"
         >
-          feat. Myra ai
+          MYRA handles data entry
         </div>
       </aside>
     </section>
@@ -210,15 +222,49 @@ function Line({
   );
 }
 
-function Strikethrough() {
-  const items = [
-    "Sticky notes",
-    "Spreadsheets",
-    "Crossed fingers",
-    "Lost leads",
+function UsedBy() {
+  const names = [
+    "Keller Williams",
+    "EXIT Realty",
+    "The Sudar Group",
+    "Momentum Loans",
+    "AMC Mortgage",
+    "Collier & Associates",
+    "First Colony Mortgage",
+    "Century 21",
+    "Coldwell Banker",
   ];
   return (
-    <section className="relative z-10 border-y border-[#2a1637]/15 bg-[#f3eadf] py-14">
+    <section className="relative z-10 border-y border-[#2a1637]/10 bg-[#f3eadf]/60 py-8">
+      <div className="mx-auto max-w-6xl px-6">
+        <p className="mb-4 text-center text-[10px] uppercase tracking-[0.4em] text-[#7a36dd]">
+          Used by 10,000+ agents at
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-2">
+          {names.map((n) => (
+            <span
+              key={n}
+              className="text-[15px] italic text-[#2a1637]/70"
+              style={{ fontFamily: "var(--font-atelier-serif)" }}
+            >
+              {n}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Strikethrough() {
+  const items = [
+    "Sticky Notes",
+    "Spreadsheets",
+    "Crossed Fingers",
+    "Lost Leads",
+  ];
+  return (
+    <section className="relative z-10 bg-[#f3eadf] py-14">
       <div className="mx-auto max-w-6xl px-6">
         <p className="mb-4 text-[10px] uppercase tracking-[0.3em] text-[#7a36dd]">
           On the way out
@@ -256,16 +302,15 @@ function PullQuote() {
         className="mt-6 text-[clamp(1.8rem,4vw,3.2rem)] italic leading-[1.15] text-[#2a1637]"
         style={{ fontFamily: "var(--font-atelier-serif)" }}
       >
-        &ldquo;Real estate is the most human business left. It asks you to
-        remember birthdays, anniversaries, the name of a son going to
-        college. Client Keeper remembers <em>for</em> you — quietly, in the
-        margin, the way a good assistant always has.&rdquo;
+        &ldquo;Built by real estate agents, for real estate agents. We
+        understand the unique challenges you face and designed every feature
+        to help you succeed — without the tech overwhelm.&rdquo;
       </blockquote>
       <p
         className="mt-6 text-lg italic text-[#7a36dd]"
         style={{ fontFamily: "var(--font-atelier-hand)" }}
       >
-        — a working agent, Year 22 in the business
+        — Client Keeper, volume I
       </p>
     </section>
   );
@@ -275,23 +320,33 @@ function FeatureSpread() {
   const features = [
     {
       n: "i",
-      title: "A contact book that listens",
-      body: "Tap the mic, tell Myra what happened on the call, go on with your day. Your notes are written, tagged, and filed before you reach the car.",
+      title: "Simple To The Core",
+      body: "Real estate has enough moving parts. We keep your CRM refreshingly simple — no 30-day onboarding, no feature overload, no bloat.",
     },
     {
       n: "ii",
-      title: "Follow-ups that come to you",
-      body: "Twelve days after an open house. A week before the inspection window closes. Birthdays, anniversaries, first-showing anniversaries. All waiting on your morning page.",
+      title: "Effortless Data Entry",
+      body: "Let MYRA handle the data entry while you focus on closing deals and building relationships. Voice memos, typed notes, all filed automatically.",
     },
     {
       n: "iii",
-      title: "One clean deal pipeline",
-      body: "From first call to closing table, every transaction in one calm thread. Commission math included. So are the small details you swore you'd remember.",
+      title: "Smart Follow-Up Reminders",
+      body: "Never let another hot lead go cold or miss a past client's birthday again. Birthdays, anniversaries, and closing dates — all tracked.",
     },
     {
       n: "iv",
-      title: "Yours, always — on every device",
-      body: "A thoughtful Mac app. A thoughtful iPhone app. A thoughtful Android app. Everything in sync, nothing pushed at you.",
+      title: "Done-For-You Data Transfer",
+      body: "Start fresh without starting over — we'll move all your contacts and history from your old CRM for you, no spreadsheets required.",
+    },
+    {
+      n: "v",
+      title: "Grow Your Sphere",
+      body: "Turn every interaction into a lasting relationship that generates referrals for years to come.",
+    },
+    {
+      n: "vi",
+      title: "Manage Your Full Business",
+      body: "Run your entire real estate business from one simple app — contacts, deals, tasks, and follow-ups all in one place.",
     },
   ];
   return (
@@ -307,10 +362,10 @@ function FeatureSpread() {
           The pages you&apos;ll turn to
         </h2>
         <span className="text-[11px] uppercase tracking-[0.32em] text-[#7a36dd]">
-          Features, plainly put
+          Everything you need · nothing you don&apos;t
         </span>
       </div>
-      <div className="grid gap-x-16 gap-y-14 md:grid-cols-2">
+      <div className="grid gap-x-16 gap-y-14 md:grid-cols-2 lg:grid-cols-3">
         {features.map((f) => (
           <article key={f.n} className="relative">
             <div
@@ -344,54 +399,329 @@ function FeatureSpread() {
 }
 
 function Myra() {
+  const jobs = [
+    {
+      k: "Schedule Follow-Ups",
+      v: "Send MYRA a voice note saying 'check in with the Millers every 6 months' and she'll notify you perfectly on schedule.",
+    },
+    {
+      k: "Capture Client Data",
+      v: "Voice memos, sticky notes, napkin scribbles — MYRA organizes it all perfectly.",
+    },
+    {
+      k: "Remember Client Details",
+      v: "When clients say 'we loved the kitchen but hated the bathroom,' tell MYRA — she adds that note to their profile.",
+    },
+    {
+      k: "Record Property Searches",
+      v: "When the Smiths say 'looking for 2,500 sqft, 4-bed in a good school district,' MYRA logs their requirements.",
+    },
+    {
+      k: "Plan Your To-Dos",
+      v: "Morning thoughts, car ramblings, task overload — MYRA enters every to-do perfectly for you.",
+    },
+    {
+      k: "Important Dates",
+      v: "Birthdays, anniversaries, closing dates — MYRA tracks all custom date follow-ups so you can show you care.",
+    },
+  ];
   return (
-    <section
-      id="myra"
-      className="relative z-10 mx-auto max-w-6xl px-6 py-20"
-    >
-      <div className="grid items-center gap-12 rounded-[3px] border border-[#2a1637]/10 bg-white p-8 shadow-[0_30px_80px_-40px_rgba(42,22,55,0.4)] md:grid-cols-[0.9fr,1.1fr] md:p-14">
+    <section id="myra" className="relative z-10 mx-auto max-w-6xl px-6 py-20">
+      <div className="rounded-[3px] border border-[#2a1637]/10 bg-white p-8 shadow-[0_30px_80px_-40px_rgba(42,22,55,0.4)] md:p-14">
+        <div className="grid items-start gap-12 md:grid-cols-[0.9fr,1.1fr]">
+          <div>
+            <span className="text-[10px] uppercase tracking-[0.32em] text-[#7a36dd]">
+              Meet your assistant
+            </span>
+            <h2
+              className="mt-4 text-[clamp(2rem,4vw,3rem)] leading-[1] text-[#2a1637]"
+              style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
+            >
+              Hi, I&apos;m MYRA.
+              <br />
+              <em className="italic text-[#7a36dd]">My Real Estate Assistant.</em>
+            </h2>
+            <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[#4a2b60]">
+              MYRA streamlines data entry and schedules follow-ups so you
+              stay organized, build better relationships, and close more
+              deals — without the overwhelm.
+            </p>
+          </div>
+          <div className="relative rounded-[2px] border border-[#2a1637]/10 bg-[#fbf6ee] p-6 shadow-inner">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-[#7a36dd]">
+              Voice memo · 0:12
+            </p>
+            <p
+              className="mt-4 text-[22px] leading-snug italic text-[#2a1637]"
+              style={{ fontFamily: "var(--font-atelier-hand)" }}
+            >
+              &ldquo;Just showed the Johnsons the house on Oak Street. They
+              loved the backyard, scheduling second showing for
+              Saturday.&rdquo;
+            </p>
+            <div className="mt-6 rounded-[2px] border border-dashed border-[#7a36dd]/40 bg-white p-4">
+              <p className="text-[10px] uppercase tracking-[0.28em] text-[#7a36dd]">
+                MYRA has filed
+              </p>
+              <ul className="mt-3 space-y-2 text-[14px] text-[#2a1637]">
+                <li>→ Contact updated: <strong>Johnson Family</strong></li>
+                <li>→ Follow-up scheduled: <strong>Saturday 10am</strong></li>
+                <li>→ Property linked: <strong>123 Oak Street</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-14 grid gap-x-12 gap-y-8 md:grid-cols-2 lg:grid-cols-3">
+          {jobs.map((j) => (
+            <div key={j.k}>
+              <h4
+                className="mb-2 text-xl text-[#2a1637]"
+                style={{
+                  fontFamily: "var(--font-atelier-serif)",
+                  fontWeight: 700,
+                }}
+              >
+                {j.k}
+              </h4>
+              <p className="text-[15px] leading-relaxed text-[#4a2b60]">
+                {j.v}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Benefits() {
+  const stats = [
+    { n: "40%", l: "Increase in client retention" },
+    { n: "10+", l: "Hours saved per week" },
+    { n: "2×", l: "Faster deal closings" },
+    { n: "98%", l: "Customer satisfaction" },
+  ];
+  const bullets = [
+    "Increase client retention by 40%",
+    "Close 2× more deals with automatic follow-up reminders",
+    "Never miss a birthday, anniversary, or closing date",
+    "Access your CRM from anywhere — fully mobile ready",
+    "Import your existing contacts in seconds",
+  ];
+  return (
+    <section className="relative z-10 border-y border-[#2a1637]/15 bg-[#f3eadf] py-20">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 md:grid-cols-[1fr,1.1fr]">
         <div>
-          <span className="text-[10px] uppercase tracking-[0.32em] text-[#7a36dd]">
-            Meet Myra
-          </span>
+          <p className="text-[10px] uppercase tracking-[0.35em] text-[#7a36dd]">
+            Why Client Keeper
+          </p>
           <h2
-            className="mt-4 text-[clamp(2rem,4vw,3rem)] leading-[1] text-[#2a1637]"
+            className="mt-3 text-[clamp(2rem,4.5vw,3.6rem)] leading-[1]"
             style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
           >
-            She does the writing.
-            <br />
-            <em className="italic text-[#7a36dd]">You do the work you&apos;re known for.</em>
+            Keep more clients. <em className="italic text-[#7a36dd]">Close more deals.</em>
           </h2>
-          <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[#4a2b60]">
-            Tap the mic after a showing, say what happened in plain English,
-            hang up. Myra listens, parses, updates the right contact, sets
-            the right follow-up, flags the things you almost forgot.
-          </p>
+          <ul className="mt-8 space-y-3">
+            {bullets.map((b) => (
+              <li
+                key={b}
+                className="flex items-start gap-3 text-[16.5px] leading-snug text-[#2a1637]"
+              >
+                <span className="mt-2 inline-block size-1.5 shrink-0 rounded-full bg-[#7a36dd]" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="relative rounded-[2px] border border-[#2a1637]/10 bg-[#fbf6ee] p-6 shadow-inner">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-[#7a36dd]">
-            Voice memo · 0:43
-          </p>
-          <p
-            className="mt-4 text-[22px] leading-snug italic text-[#2a1637]"
-            style={{ fontFamily: "var(--font-atelier-hand)" }}
+        <div className="grid grid-cols-2 gap-4">
+          {stats.map((s) => (
+            <div
+              key={s.n}
+              className="rounded-[2px] border border-[#2a1637]/10 bg-white p-6"
+            >
+              <p
+                className="text-[#7a36dd]"
+                style={{
+                  fontFamily: "var(--font-atelier-serif)",
+                  fontSize: "clamp(2.4rem, 5vw, 3.5rem)",
+                  fontWeight: 800,
+                  lineHeight: 1,
+                }}
+              >
+                {s.n}
+              </p>
+              <p className="mt-3 text-[14px] uppercase tracking-[0.18em] text-[#4a2b60]/80">
+                {s.l}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DetailedFeatures() {
+  const blocks = [
+    {
+      t: "MYRA AI Assistant",
+      b: "Meet MYRA — your AI assistant that enters data for you. Just talk or type naturally, and MYRA handles the rest. It's like having a personal assistant who never sleeps.",
+      bullets: [
+        "Voice memos that automatically become CRM entries",
+        "Natural language — just describe what happened",
+        "Auto-fills contact info, notes, and follow-ups",
+        "Works from anywhere — phone, tablet, or desktop",
+      ],
+    },
+    {
+      t: "Repeating Follow-Ups",
+      b: "Set it once, stay connected forever. Automated repeating follow-ups ensure you never lose touch with past clients or let hot leads go cold.",
+      bullets: [
+        "Automatic reminders on your schedule",
+        "Birthday, anniversary, and closing date alerts",
+        "Customizable follow-up sequences",
+        "Mark complete or snooze with one tap",
+      ],
+    },
+    {
+      t: "Contact Management",
+      b: "All your clients, leads, and relationships in one organized place. Powerful search, smart tags, and detailed history at your fingertips.",
+      bullets: [
+        "Complete history for every contact",
+        "Smart tags and custom categories",
+        "Notes, documents, and photos attached",
+        "Free migration from your current system",
+      ],
+    },
+    {
+      t: "Transaction Tracking",
+      b: "Track every deal from listing to closing. See your pipeline at a glance and never miss a deadline or important milestone.",
+      bullets: [
+        "Visual pipeline with drag-and-drop",
+        "Key dates and milestone tracking",
+        "Commission calculations built-in",
+        "Document storage for each deal",
+      ],
+    },
+  ];
+  return (
+    <section className="relative z-10 mx-auto max-w-6xl px-6 py-24">
+      <p className="text-center text-[11px] uppercase tracking-[0.35em] text-[#7a36dd]">
+        The longer list
+      </p>
+      <h2
+        className="mx-auto mt-4 max-w-3xl text-center text-[clamp(2rem,5vw,3.6rem)] leading-[1.05]"
+        style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
+      >
+        Everything you need, <em className="italic text-[#7a36dd]">nothing you don&apos;t.</em>
+      </h2>
+      <p className="mx-auto mt-5 max-w-xl text-center text-[16px] leading-relaxed text-[#4a2b60]">
+        Built specifically for real estate agents who want to spend more time
+        selling and less time on data entry.
+      </p>
+      <div className="mt-14 grid gap-10 md:grid-cols-2">
+        {blocks.map((b) => (
+          <article
+            key={b.t}
+            className="rounded-[2px] border border-[#2a1637]/10 bg-white p-8"
           >
-            &ldquo;Okay — just left the Andersons at 142 Willow. They loved
-            the kitchen, not the basement. Wife&apos;s birthday next Thursday.
-            Need to send a handwritten card and the Chapel Hill comps by
-            Friday.&rdquo;
-          </p>
-          <div className="mt-6 rounded-[2px] border border-dashed border-[#7a36dd]/40 bg-white p-4">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-[#7a36dd]">
-              Myra has filed
+            <h3
+              className="text-2xl text-[#2a1637]"
+              style={{
+                fontFamily: "var(--font-atelier-serif)",
+                fontWeight: 800,
+              }}
+            >
+              {b.t}
+            </h3>
+            <p className="mt-3 text-[16px] leading-relaxed text-[#4a2b60]">
+              {b.b}
             </p>
-            <ul className="mt-3 space-y-2 text-[14px] text-[#2a1637]">
-              <li>→ Note added to <strong>Anderson, J. &amp; M.</strong></li>
-              <li>→ Birthday reminder set for <strong>Mar 14</strong></li>
-              <li>→ Follow-up: <strong>Chapel Hill comps, Fri</strong></li>
-              <li>→ Tag added: <strong>loved kitchen / cautious on basements</strong></li>
+            <ul className="mt-4 space-y-2 text-[15px] text-[#2a1637]">
+              {b.bullets.map((x) => (
+                <li key={x} className="flex items-start gap-2">
+                  <span className="mt-[8px] inline-block size-1 rounded-full bg-[#7a36dd]" />
+                  <span>{x}</span>
+                </li>
+              ))}
             </ul>
-          </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Testimonials() {
+  const items = [
+    {
+      q: "I've tried other CRMs but this is one I'll actually use. It doesn't overwhelm me with unnecessary features, and I find myself staying organized without even thinking about it.",
+      n: "Danielle J",
+      r: "Senior Property Manager",
+    },
+    {
+      q: "So easy and mobile friendly! Finally a way to follow up with clients and organize data without the tech overwhelm. I can update everything on the go between showings.",
+      n: "Amanda W",
+      r: "Real Estate Broker",
+    },
+    {
+      q: "The follow up is fantastic. Goodbye to Excel spreadsheets and missed important dates! With MYRA and Client Keeper's simple follow-up system, managing real estate has become so much easier.",
+      n: "Tyler B",
+      r: "Real Estate Broker",
+    },
+    {
+      q: "MYRA is like having a personal assistant who never sleeps. She handles all my data entry and follow-up reminders behind the scenes so I can actually be present with my kids after work.",
+      n: "Jessica M",
+      r: "Realtor, Century 21",
+    },
+    {
+      q: "I was spending hours every week on admin tasks. Now MYRA takes care of it all automatically. I've gained back my evenings with my family and my business is thriving more than ever.",
+      n: "Marcus T",
+      r: "Broker Associate",
+    },
+    {
+      q: "As a mom of three, I needed a CRM that works for me, not the other way around. MYRA handles the busywork while I focus on clients and still make it to soccer practice.",
+      n: "Rachel K",
+      r: "Real Estate Agent, Coldwell Banker",
+    },
+  ];
+  return (
+    <section className="relative z-10 bg-[#fbf6ee] py-24">
+      <div className="mx-auto max-w-6xl px-6">
+        <p className="text-center text-[11px] uppercase tracking-[0.35em] text-[#7a36dd]">
+          Loved by agents everywhere
+        </p>
+        <h2
+          className="mx-auto mt-4 max-w-3xl text-center text-[clamp(2rem,5vw,3.4rem)] leading-[1.05]"
+          style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
+        >
+          <em className="italic text-[#7a36dd]">Don&apos;t just take our word.</em>
+          <br />
+          Here&apos;s what agents are saying.
+        </h2>
+        <div className="mt-14 grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+          {items.map((t) => (
+            <figure key={t.n} className="relative">
+              <p
+                className="text-[17.5px] italic leading-relaxed text-[#2a1637]"
+                style={{ fontFamily: "var(--font-atelier-serif)" }}
+              >
+                &ldquo;{t.q}&rdquo;
+              </p>
+              <figcaption className="mt-4">
+                <p
+                  className="text-lg text-[#7a36dd]"
+                  style={{ fontFamily: "var(--font-atelier-hand)", fontSize: "22px" }}
+                >
+                  — {t.n}
+                </p>
+                <p className="text-[11px] uppercase tracking-[0.28em] text-[#4a2b60]/70">
+                  {t.r}
+                </p>
+              </figcaption>
+            </figure>
+          ))}
         </div>
       </div>
     </section>
@@ -399,36 +729,183 @@ function Myra() {
 }
 
 function Pricing() {
+  const included = [
+    "MYRA AI does your data entry",
+    "Never miss a follow-up",
+    "Free data migration",
+    "Full mobile app access",
+    "Unlimited contacts & storage",
+    "Email integration",
+    "Transaction tracking",
+    "Birthday & anniversary alerts",
+    "Lead source tracking",
+    "Team collaboration",
+    "Priority support",
+  ];
   return (
     <section
       id="pricing"
-      className="relative z-10 mx-auto max-w-4xl px-6 py-24 text-center"
+      className="relative z-10 border-y border-[#2a1637]/15 bg-[#f3eadf] py-24"
     >
-      <p className="text-[10px] uppercase tracking-[0.32em] text-[#7a36dd]">
-        A simple subscription
+      <div className="mx-auto max-w-5xl px-6">
+        <p className="text-center text-[11px] uppercase tracking-[0.35em] text-[#7a36dd]">
+          Simple, transparent pricing
+        </p>
+        <h2
+          className="mt-4 text-center text-[clamp(2.4rem,6vw,4.5rem)] leading-[1]"
+          style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
+        >
+          Start free. <em className="italic text-[#7a36dd]">Upgrade when you&apos;re ready.</em>
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-center text-[16px] leading-relaxed text-[#4a2b60]">
+          No hidden fees. No tiers. No sales call. Just one fair number.
+        </p>
+
+        <div className="mt-14 grid gap-6 md:grid-cols-2">
+          <div className="rounded-[2px] border border-[#7a36dd]/50 bg-white p-8 shadow-[0_20px_50px_-25px_rgba(122,54,221,0.3)]">
+            <div className="flex items-baseline justify-between">
+              <span
+                className="text-2xl text-[#2a1637]"
+                style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 700 }}
+              >
+                Yearly
+              </span>
+              <span className="rounded-full bg-[#7a36dd] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
+                20% off
+              </span>
+            </div>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span
+                className="text-[#7a36dd]"
+                style={{
+                  fontFamily: "var(--font-atelier-serif)",
+                  fontSize: "clamp(3rem, 6vw, 4.5rem)",
+                  fontWeight: 800,
+                  lineHeight: 1,
+                }}
+              >
+                $19
+              </span>
+              <span className="text-[15px] text-[#4a2b60]/70">/mo</span>
+              <span className="ml-2 text-[14px] line-through text-[#4a2b60]/40">$24</span>
+            </div>
+            <p className="mt-1 text-[13px] text-[#4a2b60]/70">
+              $228/year · billed once
+            </p>
+          </div>
+          <div className="rounded-[2px] border border-[#2a1637]/15 bg-white p-8">
+            <span
+              className="text-2xl text-[#2a1637]"
+              style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 700 }}
+            >
+              Monthly
+            </span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span
+                className="text-[#2a1637]"
+                style={{
+                  fontFamily: "var(--font-atelier-serif)",
+                  fontSize: "clamp(3rem, 6vw, 4.5rem)",
+                  fontWeight: 800,
+                  lineHeight: 1,
+                }}
+              >
+                $24
+              </span>
+              <span className="text-[15px] text-[#4a2b60]/70">/mo</span>
+            </div>
+            <p className="mt-1 text-[13px] text-[#4a2b60]/70">
+              $288/year · cancel anytime
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-[2px] border border-[#2a1637]/10 bg-white p-8">
+          <p className="text-[11px] uppercase tracking-[0.32em] text-[#7a36dd]">
+            Every plan includes
+          </p>
+          <ul className="mt-5 grid gap-3 text-[15px] text-[#2a1637] sm:grid-cols-2">
+            {included.map((x) => (
+              <li key={x} className="flex items-start gap-2">
+                <span className="mt-[8px] inline-block size-1.5 shrink-0 rounded-full bg-[#7a36dd]" />
+                <span>{x}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-12 text-center">
+          <a
+            href="/client-keeper-crm"
+            className="inline-flex items-center gap-3 rounded-full bg-[#300092] px-8 py-4 text-sm font-semibold text-white shadow-[0_14px_40px_-12px_rgba(48,0,146,0.5)] transition hover:-translate-y-0.5 hover:bg-[#3d0d6a]"
+          >
+            Start Free Trial →
+          </a>
+          <p className="mt-4 text-[11px] uppercase tracking-[0.3em] text-[#4a2b60]/60">
+            No credit card required · 30-day free trial · cancel anytime
+          </p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.3em] text-[#7a36dd]">
+            30-day money-back guarantee
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQ() {
+  const faqs = [
+    {
+      q: "What is Client Keeper?",
+      a: "Client Keeper is an AI-powered CRM built specifically for real estate agents. It features MYRA, an AI assistant that handles data entry through voice and text, plus automated follow-up reminders, birthday and anniversary alerts, transaction tracking, and a full mobile app.",
+    },
+    {
+      q: "How much does Client Keeper cost?",
+      a: "$19/month billed annually (20% savings) or $24/month billed monthly. All plans include full access to MYRA AI, unlimited contacts, mobile app access, and priority support. A free 30-day trial is available with no credit card required.",
+    },
+    {
+      q: "Is there a free trial?",
+      a: "Yes — a free 30-day trial with full access to all features. No credit card required. Cancel anytime.",
+    },
+    {
+      q: "What makes Client Keeper different from other CRMs?",
+      a: "Client Keeper is built specifically for real estate agents, not adapted from a generic CRM. The key difference is MYRA — our AI assistant that handles data entry through voice memos and text. Just tell MYRA about your client interaction and she automatically updates your CRM.",
+    },
+    {
+      q: "Does Client Keeper have a mobile app?",
+      a: "Yes — full-featured iOS and Android apps. You can access all your client data, record voice memos for MYRA, receive follow-up reminders, and manage transactions from anywhere.",
+    },
+  ];
+  return (
+    <section className="relative z-10 mx-auto max-w-4xl px-6 py-24">
+      <p className="text-center text-[11px] uppercase tracking-[0.35em] text-[#7a36dd]">
+        A few questions
       </p>
       <h2
-        className="mt-4 text-[clamp(2.2rem,5.5vw,4rem)] leading-[1] text-[#2a1637]"
+        className="mt-4 text-center text-[clamp(2rem,5vw,3.4rem)] leading-[1.05]"
         style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
       >
-        <em className="italic">$19</em> a month,
-        <br />
-        billed once a year.
+        Frequently asked.
       </h2>
-      <p className="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-[#4a2b60]">
-        Unlimited contacts. Unlimited transactions. Myra included. All the
-        platforms. No tiers, no surprise add-ons, no sales calls.
-      </p>
-      <div className="mt-10">
-        <a
-          href="/client-keeper-crm"
-          className="inline-flex items-center gap-3 rounded-full bg-[#300092] px-8 py-4 text-sm font-semibold text-white shadow-[0_14px_40px_-12px_rgba(48,0,146,0.5)] transition hover:-translate-y-0.5 hover:bg-[#3d0d6a]"
-        >
-          Try free for 30 days →
-        </a>
-        <p className="mt-4 text-[11px] uppercase tracking-[0.3em] text-[#4a2b60]/60">
-          Or $24/mo if you prefer to pay by the month
-        </p>
+      <div className="mt-12 divide-y divide-[#2a1637]/15 border-y border-[#2a1637]/15">
+        {faqs.map((f) => (
+          <details key={f.q} className="group py-6">
+            <summary className="flex cursor-pointer items-baseline justify-between gap-6 list-none">
+              <h3
+                className="text-xl text-[#2a1637]"
+                style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 700 }}
+              >
+                {f.q}
+              </h3>
+              <span className="text-[#7a36dd] transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+            <p className="mt-4 text-[16px] leading-relaxed text-[#4a2b60]">
+              {f.a}
+            </p>
+          </details>
+        ))}
       </div>
     </section>
   );
@@ -436,21 +913,36 @@ function Pricing() {
 
 function Sign() {
   return (
-    <footer className="relative z-10 border-t border-[#2a1637]/15 bg-[#f3eadf] py-12">
-      <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-6 md:flex-row md:items-center md:justify-between">
-        <div>
+    <footer className="relative z-10 border-t border-[#2a1637]/15 bg-[#f3eadf] py-14">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-[11px] uppercase tracking-[0.35em] text-[#7a36dd]">
+            Start your free 30-day trial
+          </p>
+          <h3
+            className="mt-4 text-[clamp(2rem,5vw,3.2rem)] leading-[1.05]"
+            style={{ fontFamily: "var(--font-atelier-serif)", fontWeight: 800 }}
+          >
+            Join <em className="italic text-[#7a36dd]">10,000+ agents</em> closing more
+            deals with Client Keeper.
+          </h3>
+          <a
+            href="/client-keeper-crm"
+            className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#300092] px-8 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#3d0d6a]"
+          >
+            Start Free Trial →
+          </a>
+        </div>
+        <div className="mt-12 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
           <p
             className="text-3xl italic text-[#7a36dd]"
             style={{ fontFamily: "var(--font-atelier-hand)" }}
           >
             — signed, the Client Keeper team
           </p>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.32em] text-[#4a2b60]/70">
-            Made for agents, by people who grew up around them
+          <p className="text-[11px] uppercase tracking-[0.3em] text-[#4a2b60]/70">
+            © MMXXVI · Atelier Edition · Vol. I
           </p>
-        </div>
-        <div className="text-[11px] uppercase tracking-[0.3em] text-[#4a2b60]/70">
-          © MMXXVI · Atelier Edition · Vol. I
         </div>
       </div>
     </footer>
